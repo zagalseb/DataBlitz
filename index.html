@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PlaySync</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d0d0f;
+      --bg-panel:   #141416;
+      --bg-card:    #1c1c1f;
+      --bg-item:    #242428;
+      --border:     rgba(255,255,255,.08);
+      --text:       #f0f0f2;
+      --text-sec:   #a0a0a8;
+      --text-muted: #606068;
+      --accent:     #00C896;
+      --r-sm:       6px;
+      --r-md:       10px;
+      --r-lg:       16px;
+      --font:       -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    }
+
+    html, body {
+      height: 100%; background: var(--bg);
+      color: var(--text); font-family: var(--font);
+    }
+
+    button { cursor: pointer; border: none; background: none;
+             font-family: var(--font); color: var(--text); }
+
+    /* ── Layout ── */
+    .hub-root {
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .hub-header {
+      display: flex; align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      flex-shrink: 0;
+    }
+    .hub-logo {
+      display: flex; align-items: center; gap: 10px; flex: 1;
+    }
+    .hub-logo-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900;
+      color: #000; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .hub-logo-icon img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .hub-logo-info { display: flex; flex-direction: column; gap: 1px; }
+    .hub-logo-name {
+      font-size: 15px; font-weight: 800; line-height: 1.1;
+    }
+    .hub-logo-code {
+      font-size: 10px; font-weight: 700;
+      color: var(--text-muted); letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .hub-logout-btn {
+      height: 34px; padding: 0 14px;
+      background: var(--bg-item);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted);
+      transition: all .15s;
+    }
+    .hub-logout-btn:active { color: var(--text); }
+
+    /* ── Settings button ── */
+    .hub-settings-btn {
+      width: 34px; height: 34px;
+      background: var(--bg-item);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s; margin-right: 6px;
+    }
+    .hub-settings-btn:active { opacity: .7; }
+
+    /* ── Settings sheet ── */
+    .set-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 200; opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .set-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .set-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      z-index: 201;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      padding: 0 16px 32px;
+      transform: translateY(100%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      max-width: 520px; margin: 0 auto;
+    }
+    .set-sheet.open { transform: translateY(0); }
+
+    .set-handle {
+      width: 36px; height: 4px;
+      background: var(--border); border-radius: 2px;
+      margin: 10px auto 6px;
+    }
+    .set-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .set-title { font-size: 16px; font-weight: 800; }
+    .set-close {
+      width: 28px; height: 28px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 50%; color: var(--text-muted);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .set-field { margin-bottom: 16px; }
+    .set-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 6px; display: block;
+    }
+    .set-input {
+      width: 100%; height: 46px; padding: 0 12px;
+      background: var(--bg-item); border: 1px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text);
+      font-size: 14px; font-family: var(--font);
+      transition: border-color .15s;
+    }
+    .set-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Color palette */
+    .set-palette {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+    }
+    .set-color-chip {
+      aspect-ratio: 1; border-radius: 50%;
+      border: 3px solid transparent;
+      transition: transform .15s, border-color .15s;
+      position: relative; cursor: pointer;
+    }
+    .set-color-chip:active { transform: scale(.9); }
+    .set-color-chip.selected { border-color: #fff; transform: scale(1.1); }
+    .set-color-chip.selected::after {
+      content: '✓'; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+    }
+
+    /* Logo section */
+    .set-logo-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .set-logo-preview {
+      width: 56px; height: 56px; border-radius: var(--r-md);
+      background: var(--bg-item); border: 2px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: var(--text-muted);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .set-logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .set-logo-btns { display: flex; flex-direction: column; gap: 6px; }
+    .set-logo-upload {
+      height: 32px; padding: 0 14px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-sm); font-size: 12px; font-weight: 700;
+      color: var(--text-sec); cursor: pointer;
+    }
+    .set-logo-clear {
+      height: 32px; padding: 0 14px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--r-sm); font-size: 12px;
+      color: var(--text-muted); cursor: pointer;
+    }
+
+    .set-save-btn {
+      width: 100%; height: 50px;
+      background: var(--accent); color: #000;
+      font-size: 15px; font-weight: 800;
+      border-radius: var(--r-md); margin-top: 4px;
+      cursor: pointer; border: none;
+    }
+    .set-save-btn:active { opacity: .8; }
+
+    /* ── Content ── */
+    .hub-content {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 32px 20px;
+      max-width: 480px; margin: 0 auto; width: 100%;
+    }
+
+    .hub-welcome {
+      margin-bottom: 32px;
+    }
+    .hub-welcome-title {
+      font-size: 28px; font-weight: 900;
+      letter-spacing: -.5px; line-height: 1.15;
+      margin-bottom: 6px;
+    }
+    .hub-welcome-sub {
+      font-size: 14px; color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    /* ── App cards ── */
+    .hub-apps {
+      display: flex; flex-direction: column; gap: 14px;
+    }
+
+    .hub-app-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      display: flex; align-items: center; gap: 16px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      text-decoration: none; color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hub-app-card:active {
+      background: var(--bg-item);
+    }
+    .hub-app-card.available:hover {
+      border-color: var(--accent);
+    }
+    .hub-app-card.coming-soon {
+      opacity: .5; cursor: default;
+    }
+
+    .hub-app-icon {
+      width: 56px; height: 56px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+    }
+    .hub-app-icon.gametime {
+      background: rgba(0,200,150,.12);
+      border: 1px solid rgba(0,200,150,.2);
+    }
+    .hub-app-icon.pp {
+      background: rgba(30,136,229,.12);
+      border: 1px solid rgba(30,136,229,.2);
+    }
+    .hub-app-icon.playbook {
+      background: rgba(245,197,24,.12);
+      border: 1px solid rgba(245,197,24,.2);
+    }
+
+    .hub-app-info { flex: 1; min-width: 0; }
+    .hub-app-name {
+      font-size: 17px; font-weight: 800;
+      margin-bottom: 3px;
+    }
+    .hub-app-desc {
+      font-size: 13px; color: var(--text-sec);
+      line-height: 1.4;
+    }
+
+    .hub-app-arrow {
+      font-size: 20px; color: var(--text-muted);
+      flex-shrink: 0; transition: transform .2s;
+    }
+    .hub-app-card.available:hover .hub-app-arrow {
+      transform: translateX(3px);
+    }
+
+    .hub-app-badge {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 3px;
+      background: var(--bg-item);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    .hub-footer {
+      padding: 20px 20px 32px;
+      text-align: center;
+      font-size: 11px; color: var(--text-muted);
+      max-width: 480px; margin: 0 auto; width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="hub-root">
+
+  <!-- Header -->
+  <header class="hub-header">
+    <div class="hub-logo">
+      <div class="hub-logo-icon" id="hub-logo-icon">PS</div>
+      <div class="hub-logo-info">
+        <div class="hub-logo-name" id="hub-logo-name">PlaySync</div>
+        <div class="hub-logo-code" id="hub-logo-code"></div>
+      </div>
+    </div>
+    <button class="hub-settings-btn" id="btn-settings" title="Configuración del equipo">⚙</button>
+    <button class="hub-logout-btn" id="btn-logout">Cerrar sesión</button>
+  </header>
+
+  <!-- Content -->
+  <div class="hub-content">
+
+    <div class="hub-welcome">
+      <div class="hub-welcome-title" id="hub-welcome-title">
+        Bienvenido
+      </div>
+      <div class="hub-welcome-sub">
+        Selecciona la herramienta con la que quieres trabajar.
+      </div>
+    </div>
+
+    <div class="hub-apps">
+
+      <!-- GAMETIME -->
+      <a class="hub-app-card available" href="game.html" id="card-gametime">
+        <div class="hub-app-icon gametime">🏈</div>
+        <div class="hub-app-info">
+          <div class="hub-app-name">GAMETIME</div>
+          <div class="hub-app-desc">
+            Captura de jugadas en vivo, análisis y export para HUDL.
+          </div>
+        </div>
+        <div class="hub-app-arrow">→</div>
+      </a>
+
+      <!-- PLAYBOOK -->
+      <a class="hub-app-card available" href="playbook.html" id="card-playbook">
+        <div class="hub-app-icon playbook">📓</div>
+        <div class="hub-app-info">
+          <div class="hub-app-name">PLAYBOOK</div>
+          <div class="hub-app-desc">
+            Edita formaciones, jugadas y esquemas defensivos de tu equipo.
+          </div>
+        </div>
+        <div class="hub-app-arrow">→</div>
+      </a>
+
+      <!-- PLAYER PARTICIPATION -->
+      <div class="hub-app-card coming-soon">
+        <div class="hub-app-icon pp">📋</div>
+        <div class="hub-app-info">
+          <div class="hub-app-name">PLAYER PARTICIPATION</div>
+          <div class="hub-app-desc">
+            Snaps, grading y análisis de participación por jugador.
+          </div>
+        </div>
+        <span class="hub-app-badge">Próximamente</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="hub-footer">
+    PlaySync · Football Analytics
+  </div>
+
+</div>
+
+<!-- Settings backdrop -->
+<div class="set-backdrop" id="set-backdrop"></div>
+
+<!-- Settings sheet -->
+<div class="set-sheet" id="set-sheet">
+  <div class="set-handle"></div>
+  <div class="set-header">
+    <span class="set-title">⚙ Configuración del equipo</span>
+    <button class="set-close" id="set-close">✕</button>
+  </div>
+
+  <!-- Nombre -->
+  <div class="set-field">
+    <label class="set-label">Nombre del equipo</label>
+    <input class="set-input" id="set-name" type="text"
+           maxlength="30" autocomplete="off"/>
+  </div>
+
+  <!-- Iniciales -->
+  <div class="set-field">
+    <label class="set-label">Iniciales</label>
+    <input class="set-input" id="set-initials" type="text"
+           maxlength="3" autocomplete="off"
+           style="text-transform:uppercase; letter-spacing:.1em;"/>
+  </div>
+
+  <!-- Color -->
+  <div class="set-field">
+    <label class="set-label">Color del equipo</label>
+    <div class="set-palette" id="set-palette"></div>
+  </div>
+
+  <!-- Logo -->
+  <div class="set-field">
+    <label class="set-label">Logo</label>
+    <div class="set-logo-row">
+      <div class="set-logo-preview" id="set-logo-preview"></div>
+      <div class="set-logo-btns">
+        <button class="set-logo-upload" id="set-logo-upload-btn">📁 Cambiar imagen</button>
+        <button class="set-logo-clear"  id="set-logo-clear-btn">✕ Quitar logo</button>
+      </div>
+    </div>
+    <input type="file" id="set-logo-file"
+           accept="image/png,image/jpeg,image/webp,image/svg+xml"
+           style="display:none">
+  </div>
+
+  <button class="set-save-btn" id="set-save-btn">Guardar cambios</button>
+</div>
+
+<script src="js/teamConfig.js"></script>
+<script>
+'use strict';
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Guard — si no hay equipo activo, ir al login
+  if (!TeamConfig.requireTeam()) return;
+
+  const cfg  = TeamConfig.get();
+  const code = TeamConfig.getActiveTeam();
+
+  // ── Aplicar identidad del equipo ──────
+  document.documentElement.style.setProperty('--accent', cfg.color);
+
+  // Logo icon
+  const logoIcon = document.getElementById('hub-logo-icon');
+  if (cfg.logo) {
+    logoIcon.innerHTML = `<img src="${cfg.logo}" alt="${cfg.name}">`;
+  } else {
+    logoIcon.textContent      = cfg.initials || cfg.name.slice(0,2).toUpperCase();
+    logoIcon.style.background = cfg.color;
+    logoIcon.style.color      = _contrastColor(cfg.color);
+  }
+
+  // Nombre y código
+  document.getElementById('hub-logo-name').textContent = cfg.name || 'PlaySync';
+  document.getElementById('hub-logo-code').textContent = code || '';
+
+  // Bienvenida personalizada
+  if (cfg.name && cfg.name !== 'Mi Equipo') {
+    document.getElementById('hub-welcome-title').textContent =
+      `Hola, ${cfg.name} 👋`;
+  }
+
+  // Hover dinámico en card de GAMETIME
+  const card = document.getElementById('card-gametime');
+  card.addEventListener('mouseenter', () => {
+    card.style.borderColor = cfg.color;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.borderColor = '';
+  });
+
+  const cardPlaybook = document.getElementById('card-playbook');
+  cardPlaybook.addEventListener('mouseenter', () => {
+    cardPlaybook.style.borderColor = cfg.color;
+  });
+  cardPlaybook.addEventListener('mouseleave', () => {
+    cardPlaybook.style.borderColor = '';
+  });
+
+  // ── Logout ────────────────────────────
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    if (confirm('¿Cerrar sesión?')) {
+      TeamConfig.logout(); // redirige a login.html
+    }
+  });
+
+  // ── Settings sheet ────────────────────
+  const PALETTE = [
+    '#00C896','#1E88E5','#E53935','#F57C00',
+    '#8E24AA','#F5C518','#00ACC1','#7CB342',
+    '#D81B60','#1565C0','#757575','#E0E0E0',
+  ];
+
+  let _setLogo  = cfg.logo;
+  let _setColor = cfg.color;
+
+  function openSettings() {
+    const cur = TeamConfig.get();
+    _setLogo  = cur.logo;
+    _setColor = cur.color;
+
+    document.getElementById('set-name').value     = cur.name || '';
+    document.getElementById('set-initials').value = cur.initials || '';
+
+    document.getElementById('set-palette').innerHTML = PALETTE.map(hex => `
+      <div class="set-color-chip ${hex === _setColor ? 'selected' : ''}"
+           data-hex="${hex}"
+           style="background:${hex}">
+      </div>
+    `).join('');
+
+    _renderSetLogoPreview();
+
+    document.getElementById('set-backdrop').classList.add('open');
+    document.getElementById('set-sheet').classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('set-backdrop').classList.remove('open');
+    document.getElementById('set-sheet').classList.remove('open');
+  }
+
+  function _renderSetLogoPreview() {
+    const preview  = document.getElementById('set-logo-preview');
+    const initials = document.getElementById('set-initials').value.trim()
+                  || document.getElementById('set-name').value.trim().slice(0,2).toUpperCase()
+                  || '?';
+    if (_setLogo) {
+      preview.innerHTML = `<img src="${_setLogo}" alt="logo">`;
+      preview.style.background = 'transparent';
+      preview.style.border = `2px solid ${_setColor}`;
+    } else {
+      preview.innerHTML = initials;
+      preview.style.background = _setColor;
+      preview.style.color = _contrastColor(_setColor);
+      preview.style.border = 'none';
+    }
+  }
+
+  function saveSettings() {
+    const name     = document.getElementById('set-name').value.trim();
+    const initials = document.getElementById('set-initials').value.trim().toUpperCase();
+
+    if (!name) {
+      document.getElementById('set-name').style.borderColor = '#e53935';
+      setTimeout(() => document.getElementById('set-name').style.borderColor = '', 2000);
+      return;
+    }
+
+    TeamConfig.set({
+      name,
+      initials: initials || name.slice(0,2).toUpperCase(),
+      color:    _setColor,
+      logo:     _setLogo,
+    });
+
+    closeSettings();
+
+    // Re-aplicar identidad en el hub sin recargar
+    document.documentElement.style.setProperty('--accent', _setColor);
+    const logoIcon = document.getElementById('hub-logo-icon');
+    const logoName = document.getElementById('hub-logo-name');
+    logoName.textContent = name;
+    if (_setLogo) {
+      logoIcon.innerHTML = `<img src="${_setLogo}" alt="${name}">`;
+      logoIcon.style.background = 'transparent';
+    } else {
+      logoIcon.textContent = initials || name.slice(0,2).toUpperCase();
+      logoIcon.style.background = _setColor;
+      logoIcon.style.color = _contrastColor(_setColor);
+    }
+  }
+
+  document.getElementById('btn-settings').addEventListener('click', openSettings);
+  document.getElementById('set-close').addEventListener('click', closeSettings);
+  document.getElementById('set-backdrop').addEventListener('click', closeSettings);
+  document.getElementById('set-save-btn').addEventListener('click', saveSettings);
+
+  document.getElementById('set-palette').addEventListener('click', e => {
+    const chip = e.target.closest('.set-color-chip');
+    if (!chip) return;
+    _setColor = chip.dataset.hex;
+    document.querySelectorAll('.set-color-chip')
+      .forEach(c => c.classList.toggle('selected', c.dataset.hex === _setColor));
+    _renderSetLogoPreview();
+  });
+
+  document.getElementById('set-initials').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+    _renderSetLogoPreview();
+  });
+
+  document.getElementById('set-logo-upload-btn').addEventListener('click', () => {
+    document.getElementById('set-logo-file').click();
+  });
+  document.getElementById('set-logo-file').addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      _setLogo = ev.target.result;
+      _renderSetLogoPreview();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+  document.getElementById('set-logo-clear-btn').addEventListener('click', () => {
+    _setLogo = null;
+    _renderSetLogoPreview();
+  });
+});
+
+function _contrastColor(hex) {
+  const h = (hex || '').replace('#','');
+  if (h.length < 6) return '#fff';
+  const r = parseInt(h.slice(0,2),16);
+  const g = parseInt(h.slice(2,4),16);
+  const b = parseInt(h.slice(4,6),16);
+  return (0.299*r + 0.587*g + 0.114*b)/255 > 0.55 ? '#000' : '#fff';
+}
+</script>
+</body>
+</html>

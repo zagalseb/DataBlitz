@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>DataBlitz</title>
+
+  <!-- Stylesheets (order matters) -->
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       TOP BAR — Logo + Scoreboard + Actions
+  ══════════════════════════════════════════ -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <button class="icon-btn" id="btn-menu" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect y="3" width="20" height="2" rx="1" fill="currentColor"/>
+          <rect y="9" width="20" height="2" rx="1" fill="currentColor"/>
+          <rect y="15" width="20" height="2" rx="1" fill="currentColor"/>
+        </svg>
+      </button>
+      <div class="logo">
+        <div class="logo-icon">P</div>
+        <span class="logo-text">PLAYSYNC</span>
+      </div>
+      <nav class="main-nav">
+        <a class="nav-link active" href="game.html">GAME</a>
+        <a class="nav-link" href="playbook.html">PLAYBOOK</a>
+        <a class="nav-link" href="analysis.html">ANALYSIS</a>
+      </nav>
+      <a class="icon-btn" href="index.html" aria-label="Inicio" title="Inicio" style="margin-left:4px;text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <path d="M3 10.5L10 3.5L17 10.5V17.5H13V13H7V17.5H3V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+
+    <div class="topbar-score">
+
+      <!-- HOME -->
+      <div class="score-team">
+        <input class="team-name-input" id="team-home-name" type="text"
+              maxlength="10" value="HOME" placeholder="HOME" />
+        <input class="score-input" id="score-home" type="number"
+              min="0" max="999" value="0" inputmode="numeric" />
+      </div>
+
+      <div class="score-divider">
+        <div class="situation-chip" id="situation-chip">1st and 10</div>
+        <!-- Quarter selector -->
+        <div class="quarter-selector" id="quarter-selector">
+          <button class="quarter-btn active" data-q="1">Q1</button>
+          <button class="quarter-btn" data-q="2">Q2</button>
+          <button class="quarter-btn" data-q="3">Q3</button>
+          <button class="quarter-btn" data-q="4">Q4</button>
+          <button class="quarter-btn" data-q="OT">OT</button>
+        </div>
+      </div>
+
+      <!-- AWAY -->
+      <div class="score-team">
+        <input class="score-input" id="score-away" type="number"
+              min="0" max="999" value="0" inputmode="numeric" />
+        <input class="team-name-input team-name-right" id="team-away-name" type="text"
+              maxlength="10" value="AWAY" placeholder="AWAY" />
+      </div>
+
+    </div>
+
+    <div class="topbar-right">
+      <div class="possession-toggle" id="possession-toggle">
+        <button class="poss-btn active" data-mode="own">OWN</button>
+        <button class="poss-btn" data-mode="opp">OPP</button>
+        <button class="poss-btn" data-mode="st">ST</button>
+      </div>
+      <button class="btn-secondary" id="btn-end-drive">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="5" y="4" width="4" height="6" rx="1" fill="currentColor"/>
+        </svg>
+        End Drive
+      </button>
+      <button class="btn-primary" id="btn-next-play">
+        Next Play
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M5 3l5 4-5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       MIDDLE SECTION — Field + Counters
+  ══════════════════════════════════════════ -->
+  <main id="middle">
+
+    <!-- Left counters -->
+    <div class="counters" id="counters-left">
+      <div class="counter-group">
+        <span class="counter-label">YARDLINE</span>
+        <div class="counter-control">
+          <button class="counter-btn minus" data-target="opp">−</button>
+          <span class="counter-value" id="val-opp">40</span>
+          <button class="counter-btn plus" data-target="opp">+</button>
+        </div>
+      </div>
+      <div class="counter-group">
+        <span class="counter-label">TO FIRST</span>
+        <div class="counter-control">
+          <button class="counter-btn minus" data-target="tofirst">−</button>
+          <span class="counter-value" id="val-tofirst">8</span>
+          <button class="counter-btn plus" data-target="tofirst">+</button>
+        </div>
+      </div>
+      <div class="counter-group">
+        <span class="counter-label">DOWN</span>
+        <div class="counter-control">
+          <button class="counter-btn minus" data-target="down">−</button>
+          <span class="counter-value" id="val-down">3<sup>rd</sup></span>
+          <button class="counter-btn plus" data-target="down">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Field visualization -->
+    <div class="field-wrap" id="field-wrap">
+      <div class="field">
+        <!-- End zones -->
+        <div class="endzone endzone-left"></div>
+        <div class="endzone endzone-right"></div>
+
+        <!-- Yard lines -->
+        <div class="yard-lines" id="yard-lines"></div>
+
+        <!-- Yard labels -->
+        <div class="yard-labels" id="yard-labels"></div>
+
+        <!-- Ball marker -->
+        <div class="ball-marker" id="ball-marker">
+          <div class="ball-dot home"></div>
+          <div class="ball-line"></div>
+          <div class="ball-dot away"></div>
+        </div>
+
+        <!-- Logo watermark -->
+        <div class="field-logo">G</div>
+
+        <!-- Flip direction button -->
+        <button class="flip-btn" id="btn-flip">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 6h10M8 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          FLIP DIRECTION
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Yards G/L + Penalty + Run/Pass -->
+    <div class="counters" id="counters-right">
+
+      <div class="counter-group">
+        <span class="counter-label">YARDS G/L</span>
+        <div class="counter-control">
+          <button class="counter-btn minus" data-target="yards">−</button>
+          <span class="counter-value" id="val-yards">0</span>
+          <button class="counter-btn plus" data-target="yards">+</button>
+        </div>
+      </div>
+
+      <button class="penalty-toggle-btn" id="btn-penalty-toggle" data-active="false">
+        ⚑ PENALTY
+      </button>
+
+      <div class="run-pass-toggle">
+        <button class="toggle-btn" id="btn-run" data-type="run">RUN</button>
+        <button class="toggle-btn active" id="btn-pass" data-type="pass">PASS</button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       PLAY BAR — Current selected play display
+  ══════════════════════════════════════════ -->
+  <div id="play-bar">
+    <button class="icon-btn" id="btn-clipboard">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="4" y="2" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M7 2h4v2a1 1 0 01-1 1H8a1 1 0 01-1-1V2z" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="6.5" y1="8" x2="11.5" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="6.5" y1="11" x2="10" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <!-- Playbook Editor button -->
+    <button class="icon-btn" id="btn-playbook-editor" title="Playbook Editor">
+      <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+        <rect x="2" y="1" width="10" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 5h6M5 8h6M5 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M12 10l3 3-1.5 1.5-3-3v-1.5h1.5z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <div class="play-bar-content">
+      <span class="play-type-badge" id="play-badge">PASS</span>
+      <span class="play-name" id="play-name">Gun Flex Y Off Close Left — TE Wheel</span>
+    </div>
+
+    <!-- Drive chip -->
+    <div class="drive-chip" id="drive-chip">
+      Drive 1 · 0 plays · 0 yds
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       BOTTOM PANEL — Selectors + Play History
+  ══════════════════════════════════════════ -->
+  <section id="bottom-panel">
+
+    <!-- Col 1: Strength -->
+    <div class="selector-col" id="col-strength">
+      <div class="col-header off-header">Str</div>
+      <div class="strength-btns">
+        <button class="strength-btn active" data-strength="L">L</button>
+        <button class="strength-btn" data-strength="R">R</button>
+        <div class="hash-label">HASH</div>
+        <button class="hash-btn" data-hash="L">L</button>
+        <button class="hash-btn active" data-hash="M">M</button>
+        <button class="hash-btn" data-hash="R">R</button>
+      </div>
+    </div>
+
+    <!-- Col 2: Formation -->
+    <div class="selector-col" id="col-formation">
+      <div class="col-header off-header">
+        Formation
+        <div class="motion-chip-wrap" id="motion-chip-wrap">
+          <button class="motion-chip" id="motion-chip">
+            Motion: None
+            <span class="motion-chip-arrow">▾</span>
+          </button>
+          <div class="motion-dropdown" id="motion-dropdown" style="display:none"></div>
+        </div>
+      </div>
+      <div class="selector-list" id="formation-list"></div>
+    </div>
+
+    <!-- Col 3: Play -->
+    <div class="selector-col" id="col-play">
+      <div class="col-header off-header">Play</div>
+      <div class="selector-list" id="play-list"></div>
+    </div>
+
+    <!-- Col 4: Result -->
+    <div class="selector-col" id="col-result">
+      <div class="col-header off-header">Result</div>
+      <div class="result-btns" id="result-btns">
+        <button class="result-btn" data-result="1st Down">1st Down</button>
+        <button class="result-btn" data-result="TD">🏈 TD</button>
+        <button class="result-btn" data-result="Complete">Complete</button>
+        <button class="result-btn" data-result="Incomplete">Incomplete</button>
+        <button class="result-btn" data-result="Gain">Gain</button>
+        <button class="result-btn" data-result="TFL">TFL</button>
+        <button class="result-btn" data-result="Turnover">Turnover</button>
+        <button class="result-btn" data-result="Sack">Sack</button>
+        <button class="result-btn" data-result="Scramble">Scramble</button>
+        <button class="result-btn" data-result="Punt">Punt</button>
+        <button class="result-btn" data-result="FG">FG</button>
+        <button class="result-btn" data-result="Safety">Safety</button>
+      </div>
+    </div>
+
+    <!-- Col 5: Player + Notes -->
+    <div class="selector-col" id="col-player">
+      <div class="col-header off-header">Player / Notes</div>
+      <div class="player-num-grid" id="player-num-grid"></div>
+      <textarea class="notes-input" id="play-notes" maxlength="80" placeholder="Quick note..."></textarea>
+    </div>
+
+    <!-- Col 6: Front — def-first-col tiene el split border -->
+    <div class="selector-col def-first-col" id="col-front">
+      <div class="col-header def-header">Front</div>
+      <div class="selector-list" id="front-list"></div>
+    </div>
+
+    <!-- Col 7: Blitz -->
+    <div class="selector-col" id="col-blitz">
+      <div class="col-header def-header">Blitz</div>
+      <div class="selector-list" id="blitz-list"></div>
+    </div>
+
+    <!-- Col 8: Coverage -->
+    <div class="selector-col" id="col-coverage">
+      <div class="col-header def-header">Coverage</div>
+      <div class="selector-list" id="coverage-list"></div>
+    </div>
+
+    <!-- Col 9: History -->
+    <div class="selector-col" id="col-history">
+      <div class="col-header clickable-header" onclick="HistoryOverlay.open()">
+        History <span class="expand-icon">⤢</span>
+        <div class="history-filter" onclick="event.stopPropagation()">
+          <button class="hist-filter-btn active" data-filter="all">All</button>
+          <button class="hist-filter-btn" data-filter="own">Own</button>
+          <button class="hist-filter-btn" data-filter="opp">Opp</button>
+        </div>
+        <button class="export-btn" id="btn-export">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M6.5 1v7M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 10v1.5a.5.5 0 00.5.5h10a.5.5 0 00.5-.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          XLSX
+        </button>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">No plays recorded yet</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- OPP Panel — populated by opponent.js, shown when possessionMode === 'opp' -->
+  <section id="opp-panel" style="display:none"></section>
+
+  <!-- Scripts -->
+  <script src="js/teamConfig.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/field.js"></script>
+  <script src="js/selectors.js"></script>
+  <script src="js/counters.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/defense.js"></script>
+  <script src="js/drives.js"></script>
+  <script src="js/motionChip.js"></script>
+  <script src="js/playLogic.js"></script>
+  <script src="js/playbookEditor.js"></script>
+  <script src="js/playEditor.js"></script>
+  <script src="js/gameManager.js"></script>
+  <script src="js/historyOverlay.js"></script>
+  <script src="js/opponent.js"></script>
+  <script src="js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      TeamConfig.apply();
+    });
+  </script>
+
+<!-- PENALTY BOTTOM SHEET -->
+<div class="pen-backdrop" id="pen-backdrop"></div>
+<div class="pen-sheet" id="pen-sheet">
+
+  <div class="pen-sheet-handle"></div>
+
+  <div class="pen-sheet-header">
+    <span class="pen-sheet-title">⚑ Penalty</span>
+    <button class="pen-sheet-close" id="pen-sheet-close">✕</button>
+  </div>
+
+  <!-- Row 1: Team -->
+  <div class="pen-row">
+    <span class="pen-label">Team</span>
+    <div class="pen-btn-group">
+      <button class="pen-team-btn active" data-team="OFF">OFF</button>
+      <button class="pen-team-btn"        data-team="DEF">DEF</button>
+      <button class="pen-team-btn"        data-team="ST">ST</button>
+    </div>
+  </div>
+
+  <!-- Row 2: Foul + Player # -->
+  <div class="pen-row">
+    <input class="pen-text-input" id="pen-foul"
+           type="text" placeholder="Foul (ej. Holding)" maxlength="40"/>
+    <input class="pen-num-input" id="pen-player-num"
+           type="number" min="0" max="99" placeholder="#" inputmode="numeric"/>
+  </div>
+
+  <!-- Row 3: Yards + Net Yards + checkboxes -->
+  <div class="pen-row">
+    <div class="pen-field-group">
+      <span class="pen-label">Yards</span>
+      <input class="pen-num-input" id="pen-yards"
+             type="number" min="0" max="99" value="10" inputmode="numeric"/>
+    </div>
+    <div class="pen-field-group">
+      <span class="pen-label">Net Yds</span>
+      <input class="pen-num-input" id="pen-net-yards"
+             type="number" min="0" max="99" value="10" inputmode="numeric"/>
+    </div>
+    <label class="pen-check-label">
+      <input type="checkbox" id="pen-presnap"> Pre-snap
+    </label>
+    <label class="pen-check-label">
+      <input type="checkbox" id="pen-noplay"> No Play
+    </label>
+  </div>
+
+  <!-- Row 4: Decision -->
+  <div class="pen-row">
+    <span class="pen-label">Decision</span>
+    <div class="pen-btn-group">
+      <button class="pen-dec-btn active" data-decision="accepted">Accepted</button>
+      <button class="pen-dec-btn"        data-decision="declined">Declined</button>
+      <button class="pen-dec-btn"        data-decision="offsetting">Offsetting</button>
+    </div>
+  </div>
+
+  <!-- Footer: Confirm -->
+  <div class="pen-sheet-footer">
+    <button class="pen-confirm-btn" id="pen-confirm-btn">Confirm Penalty</button>
+    <button class="pen-clear-btn"   id="pen-clear-btn">Clear</button>
+  </div>
+
+</div>
+
+</body>
+</html>

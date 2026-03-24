@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analysis — PlaySync</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0f1923;
+      --bg-mid:      #141f2e;
+      --bg-panel:    #1a2535;
+      --bg-card:     #1e2d3d;
+      --bg-item:     #243447;
+      --border:      #243040;
+      --border-light:#2d3f55;
+      --text:        #ffffff;
+      --text-sec:    #8ba3be;
+      --text-muted:  #4a6278;
+      --run:         #e53935;
+      --run-bg:      rgba(229,57,53,0.18);
+      --pass:        #2196f3;
+      --pass-bg:     rgba(33,150,243,0.18);
+      --success:     #22c55e;
+      --warn:        #f59e0b;
+      --danger:      #ef4444;
+      --accent:      #ff6b00;
+      --font: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Topbar ──────────────────────────── */
+    #topbar {
+      height: 56px;
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .logo { display: flex; align-items: center; gap: 7px; text-decoration: none; }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent, #004992);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; color: #fff;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+    .logo-text {
+      font-size: 17px; font-weight: 700;
+      color: var(--text); letter-spacing: -0.3px;
+    }
+
+    .main-nav { display: flex; gap: 2px; margin-left: 12px; }
+
+    .nav-link {
+      padding: 0 10px; height: 30px;
+      display: flex; align-items: center;
+      font-weight: 700; font-size: 12px; letter-spacing: 1px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: color .15s;
+    }
+
+    .nav-link:hover  { color: var(--text); }
+    .nav-link.active { color: var(--accent); }
+
+    /* Score + situation on the right of topbar */
+    .tb-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .tb-score {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tb-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .tb-team-name {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .tb-score-num {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .tb-sep {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding-bottom: 2px;
+    }
+
+    .tb-situation {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      padding-left: 10px;
+      border-left: 1px solid var(--border);
+    }
+
+    .tb-quarter {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .tb-down-field {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+      white-space: nowrap;
+    }
+
+    /* ── Tab bar ─────────────────────────── */
+    .tab-bar {
+      display: flex;
+      background: var(--bg-mid);
+      border-bottom: 2px solid var(--border);
+      padding: 0 16px;
+      position: sticky;
+      top: 56px;
+      z-index: 90;
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color .2s;
+    }
+
+    .tab-btn:hover { color: var(--text-sec); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Refresh bar ─────────────────────── */
+    .refresh-bar {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.25; }
+    }
+
+    /* ── Page layout ─────────────────────── */
+    .page {
+      padding: 14px 16px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .col-full { grid-column: 1 / -1; }
+
+    @media (max-width: 580px) {
+      .tab-panel.active { grid-template-columns: 1fr; }
+      .col-full { grid-column: 1; }
+    }
+
+    /* ── Card ────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+    }
+
+    .card-body { padding: 14px; }
+
+    /* ── Success rate card ───────────────── */
+    .success-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 16px;
+    }
+
+    .success-big {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .success-big.good { color: var(--success); }
+    .success-big.mid  { color: var(--warn); }
+    .success-big.bad  { color: var(--danger); }
+
+    .success-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .success-fraction {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sec);
+      margin-top: 4px;
+    }
+
+    .success-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-item);
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .success-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .4s ease;
+    }
+
+    /* ── Run/Pass ratio ──────────────────── */
+    .ratio-section { display: flex; flex-direction: column; gap: 14px; }
+    .ratio-divider { height: 1px; background: var(--border); }
+    .ratio-row { display: flex; flex-direction: column; gap: 6px; }
+
+    .ratio-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .ratio-numbers {
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .ratio-num {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .ratio-num.run  { color: var(--run); }
+    .ratio-num.pass { color: var(--pass); }
+
+    .ratio-type {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 0 10px 0 4px;
+      align-self: flex-end;
+      padding-bottom: 5px;
+    }
+
+    .ratio-pct {
+      font-size: 12px;
+      color: var(--text-sec);
+      margin-left: auto;
+      align-self: flex-end;
+      padding-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 9px;
+      background: var(--bg-item);
+      border-radius: 5px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar-run  { background: var(--run);  height: 100%; transition: width .4s ease; }
+    .bar-pass { background: var(--pass); height: 100%; transition: width .4s ease; }
+
+    /* ── Tendency table ──────────────────── */
+    .tend-table { width: 100%; border-collapse: collapse; }
+
+    .tend-table th {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 7px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tend-table th:first-child { text-align: left; }
+
+    .tend-table td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .tend-table td:first-child {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      border-right: 1px solid var(--border-light);
+      min-width: 40px;
+    }
+
+    .tend-table tr:last-child td { border-bottom: none; }
+    .tend-table td:last-child     { border-right: none; }
+
+    .cell-type { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; }
+    .cell-type.run   { color: var(--run); }
+    .cell-type.pass  { color: var(--pass); }
+    .cell-type.empty { color: var(--text-muted); }
+    .cell-yds  { font-size: 10px; color: var(--text-sec);   margin-top: 2px; }
+    .cell-cnt  { font-size: 9px;  color: var(--text-muted); margin-top: 1px; }
+
+    /* ── Defensive tendency cell items ──── */
+    .def-cell { display: flex; flex-direction: column; gap: 0; text-align: left; }
+    .def-cell-section { display: flex; flex-direction: column; gap: 1px; padding: 3px 0; }
+    .def-cell-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .def-cell-name { font-size: 9px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+    .def-cell-pct  { font-size: 9px; font-weight: 800; flex-shrink: 0; }
+    .def-cell-sep  { height: 1px; background: var(--border); margin: 1px 0; }
+
+    /* ── Defense usage grid ─────────────────── */
+    .def-usage-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .def-section {
+      padding: 12px;
+      border-right: 1px solid var(--border);
+    }
+
+    .def-section:last-child { border-right: none; }
+
+    .def-section-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 500px) {
+      .def-usage-grid { grid-template-columns: 1fr; }
+      .def-section { border-right: none; border-bottom: 1px solid var(--border); }
+      .def-section:last-child { border-bottom: none; }
+    }
+
+    /* ── Analysis table (formations + concepts) ── */
+    .analysis-table { width: 100%; border-collapse: collapse; }
+
+    .analysis-table th {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .analysis-table th:first-child { text-align: left; }
+
+    .analysis-table td {
+      padding: 10px 12px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-sec);
+      vertical-align: middle;
+    }
+
+    .analysis-table td:first-child {
+      text-align: left;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .analysis-table tr:last-child > td { border-bottom: none; }
+
+    .at-pct { font-weight: 800; }
+    .at-pct.good { color: var(--success); }
+    .at-pct.mid  { color: var(--warn); }
+    .at-pct.bad  { color: var(--danger); }
+
+    /* ── Expand/collapse rows ─────────────── */
+    .expand-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      font-size: 16px;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+      line-height: 1;
+    }
+
+    .expand-btn:hover { color: var(--text); background: var(--bg-item); }
+    .expand-btn.open  { color: var(--accent); }
+
+    .detail-row { display: none; }
+    .detail-row.open { display: table-row; }
+
+    .detail-cell {
+      padding: 0 !important;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-inner {
+      background: var(--bg-mid);
+      border-top: 1px solid var(--border-light);
+      overflow-x: auto;
+    }
+
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+    .detail-table th {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .detail-table td {
+      padding: 7px 10px;
+      color: var(--text-sec);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      vertical-align: middle;
+      text-align: left;
+    }
+
+    .detail-table tr:last-child td { border-bottom: none; }
+
+    .result-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+
+    .result-tag.success { background: rgba(34,197,94,.15); color: var(--success); }
+    .result-tag.failure { background: rgba(239,68,68,.12);  color: var(--danger); }
+
+    /* ── Defense killers ─────────────────── */
+    .killer-row {
+      display: flex;
+      flex-direction: column;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      gap: 4px;
+    }
+
+    .killer-row:last-child { border-bottom: none; }
+
+    .killer-rank-row { display: flex; align-items: center; gap: 6px; }
+
+    .killer-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--danger);
+      opacity: 0.6;
+      min-width: 14px;
+    }
+
+    .killer-combo { font-size: 12px; font-weight: 700; color: var(--danger); }
+
+    .killer-bar-track {
+      height: 4px;
+      background: var(--bg-item);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .killer-bar-fill {
+      height: 100%;
+      background: var(--danger);
+      border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    .killer-stats { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .killer-count { font-size: 10px; color: var(--text-muted); }
+    .killer-avg   { font-size: 10px; color: var(--danger); opacity: 0.8; }
+
+    /* ── OPP placeholder ─────────────────── */
+    .opp-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      gap: 10px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .opp-placeholder-icon  { font-size: 44px; opacity: .2; }
+    .opp-placeholder-title { font-size: 16px; font-weight: 700; color: var(--text-sec); }
+    .opp-placeholder-sub   { font-size: 12px; max-width: 240px; line-height: 1.6; }
+
+    /* ── Empty / no-game states ──────────── */
+    .empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 20px 12px;
+    }
+
+    .no-game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      gap: 10px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .no-game-icon  { font-size: 52px; opacity: 0.25; }
+    .no-game-title { font-size: 17px; font-weight: 700; color: var(--text-sec); }
+    .no-game-sub   { font-size: 13px; max-width: 260px; line-height: 1.5; }
+
+    /* ── Print ───────────────────────────── */
+    .print-header { display: none; }
+    .print-only   { display: none; }
+
+    #print-btn {
+      background: none;
+      border: 1px solid var(--border-light);
+      border-radius: 5px;
+      color: var(--text-sec);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    #print-btn:hover { color: var(--text); border-color: var(--text-sec); }
+
+    @media print {
+      @page { size: letter portrait; margin: 0.3in; }
+
+      /* Redefine color tokens → grayscale */
+      :root {
+        --bg: #fff; --bg-mid: #fff; --bg-panel: #fff;
+        --bg-card: #fff; --bg-item: #f0f0f0;
+        --border: #bbb; --border-light: #ccc;
+        --text: #000; --text-sec: #333; --text-muted: #666;
+        --run: #000; --pass: #444; --success: #000;
+        --warn: #333; --danger: #000; --accent: #000;
+      }
+
+      body { background: #fff !important; font-size: 8px; }
+
+      /* Hide screen-only elements */
+      #topbar, .tab-bar, .refresh-bar,
+      .expand-btn, .detail-row,
+      .success-bar-track, .bar-track, .killer-bar-track,
+      .no-print { display: none !important; }
+
+      /* Show print-only elements */
+      .print-header { display: block !important; }
+
+      /* Force OWN panel visible with compact 2-col grid */
+      .tab-panel[data-panel="own"] {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+      }
+
+      .page { padding: 0; gap: 5px; max-width: 100%; }
+
+      .card {
+        background: #fff !important;
+        border: 1px solid #bbb !important;
+        border-radius: 3px !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .card-head  { padding: 3px 7px !important; border-bottom: 1px solid #bbb !important; }
+      .card-title { font-size: 6.5px !important; letter-spacing: 0.08em; color: #555 !important; }
+      .card-body  { padding: 5px 7px !important; }
+
+      /* Success card */
+      .success-card     { padding: 5px 10px !important; gap: 6px !important; }
+      .success-big      { font-size: 22px !important; color: #000 !important; }
+      .success-label    { font-size: 6.5px !important; color: #666 !important; }
+      .success-fraction { font-size: 9px !important; color: #333 !important; margin-top: 2px !important; }
+
+      /* Run/Pass */
+      .ratio-section { gap: 5px !important; }
+      .ratio-num     { font-size: 18px !important; color: #000 !important; }
+      .ratio-type    { font-size: 7px !important; }
+      .ratio-pct     { font-size: 8px !important; }
+      .ratio-label   { font-size: 6.5px !important; }
+      .ratio-divider { margin: 2px 0 !important; }
+
+      /* Tables */
+      .tend-table th, .tend-table td { padding: 3px 5px !important; font-size: 7.5px !important; }
+      .analysis-table th, .analysis-table td { padding: 2px 7px !important; font-size: 7.5px !important; }
+      .cell-type  { font-size: 8px !important; }
+      .cell-yds   { font-size: 7px !important; }
+      .cell-cnt   { font-size: 6.5px !important; }
+
+      /* Defense cells */
+      .def-cell-name, .def-cell-pct { font-size: 7px !important; }
+      .def-cell-section { padding: 1px 0 !important; }
+      .def-section      { padding: 5px 7px !important; }
+      .def-section-title { font-size: 6.5px !important; margin-bottom: 3px !important; }
+
+      /* Killer rows */
+      .killer-row { padding: 3px 7px !important; }
+      .killer-combo { font-size: 8px !important; color: #000 !important; }
+      .killer-count, .killer-avg { font-size: 7px !important; color: #555 !important; }
+
+      /* Result tags */
+      .result-tag { border: 1px solid #999 !important; background: none !important; color: #000 !important; }
+
+      /* at-pct colors → black */
+      .at-pct { color: #000 !important; }
+    }
+
+    /* Blitz report table */
+    .blitz-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .blitz-table th {
+      font-size: 9px; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 6px 12px; border-bottom: 1px solid var(--border); text-align: right;
+    }
+    .blitz-table th:first-child { text-align: left; }
+    .blitz-table td {
+      padding: 9px 12px; border-bottom: 1px solid var(--border);
+      text-align: right; font-size: 12px; color: var(--text-sec);
+    }
+    .blitz-table td:first-child { text-align: left; font-weight: 700; color: var(--text); }
+    .blitz-table tr:last-child td { border-bottom: none; }
+    .blitz-better { color: var(--success); font-weight: 800; }
+    .blitz-worse  { color: var(--danger);  font-weight: 800; }
+
+    /* OPP tend cell */
+    .opp-tend-cell { display: flex; flex-direction: column; gap: 2px; text-align: center; }
+    .opp-tend-form { font-size: 9px; font-weight: 700; color: var(--text-sec); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .opp-tend-ratio { font-size: 9px; font-weight: 800; }
+    .opp-tend-ratio .r { color: var(--run);  }
+    .opp-tend-ratio .p { color: var(--pass); }
+    .opp-tend-n { font-size: 8px; color: var(--text-muted); }
+
+    /* Def summary bar */
+    .def-summary-bar {
+      display: flex; gap: 24px; padding: 14px 16px;
+      flex-wrap: wrap;
+    }
+    .def-summary-stat { display: flex; flex-direction: column; gap: 2px; }
+    .def-summary-val  { font-size: 22px; font-weight: 900; line-height: 1; }
+    .def-summary-lbl  { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; }
+
+    /* ── Formation × Situation Matrix ─────────── */
+    .fsm-wrap { padding: 0; }
+
+    .fsm-legend {
+      display: flex; align-items: center; gap: 14px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px; font-weight: 700;
+      flex-wrap: wrap;
+    }
+    .fsm-leg-run  { color: rgba(229,115,0,.9); }
+    .fsm-leg-pass { color: rgba(30,136,229,.9); }
+    .fsm-leg-note { color: var(--text-muted); margin-left: auto; }
+
+    .fsm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    .fsm-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+
+    .fsm-th-form {
+      font-size: 9px; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 7px 12px; text-align: left;
+      border-bottom: 1px solid var(--border);
+      position: sticky; left: 0;
+      background: var(--bg-card); z-index: 1;
+      min-width: 140px;
+    }
+    .fsm-th {
+      font-size: 9px; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 7px 8px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      min-width: 72px;
+    }
+
+    .fsm-formation {
+      display: flex; flex-direction: column; gap: 1px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      position: sticky; left: 0;
+      background: var(--bg-panel); z-index: 1;
+    }
+    .fsm-form-name  { font-size: 12px; font-weight: 800; color: var(--text); }
+    .fsm-form-total { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+
+    .fsm-cell {
+      padding: 8px 6px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      vertical-align: middle;
+      transition: background .15s;
+    }
+    .fsm-cell.fsm-empty { color: var(--text-muted); font-size: 11px; }
+
+    .fsm-rp {
+      display: flex; align-items: center; justify-content: center;
+      gap: 2px; font-size: 10px; font-weight: 800; line-height: 1;
+    }
+    .fsm-r   { color: var(--run); }
+    .fsm-p   { color: var(--pass); }
+    .fsm-sep { color: var(--border-light); font-size: 9px; }
+    .fsm-n   { font-size: 8px; color: var(--text-muted); margin-top: 2px; font-weight: 600; }
+
+    @media print {
+      .fsm-th-form, .fsm-formation { position: static; }
+      .fsm-cell { background: none !important; }
+      .fsm-r { color: #c65000 !important; }
+      .fsm-p { color: #0d47a1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="js/teamConfig.js"></script>
+  <script>
+    'use strict';
+
+    const GAMES_KEY   = () => TeamConfig.key('playsync_games');
+    const CURRENT_KEY = () => TeamConfig.key('playsync_current_game_id');
+
+    // ── Data loading ──────────────────────────────────────────────────────────
+
+    function loadState() {
+      try {
+        const id = localStorage.getItem(CURRENT_KEY());
+        if (!id) return null;
+        const games = JSON.parse(localStorage.getItem(GAMES_KEY()) || '[]');
+        const game  = games.find(g => g.id === id);
+        if (!game || !game.state) return null;
+        return game.state;
+      } catch (_) { return null; }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Returns own-possession plays only; falls back to including all if no
+    // play has a mode field (older saves).
+    function ownPlays(history) {
+      const hasModes = history.some(p => p.mode);
+      const base = hasModes ? history.filter(p => p.mode === 'own') : history;
+      return base.filter(p => !p.noPlay);
+    }
+
+    // Proper success rate: down-based yardage thresholds
+    function isSuccess(p) {
+      const gained = p.yardsGained || 0;
+      const needed = p.toFirst     || 10;
+      const down   = p.down        || 1;
+      const r      = (p.result     || '').toLowerCase();
+
+      // Explicit positive results
+      if (['td', 'touchdown', 'first', 'first-down', 'first_down', '1st down'].includes(r)) return true;
+      // Explicit failure results
+      if (['incomplete', 'tfl', 'turnover', 'sack', 'punt'].includes(r)) return false;
+
+      // Down-based thresholds
+      if (down === 1) return gained >= needed * 0.4;
+      if (down === 2) return gained >= needed * 0.6;
+      return gained >= needed; // 3rd & 4th: must convert
+    }
+
+    // oppYardLine → { side: 'OPP'|'OWN', num: number }
+    function parseYardLine(v) {
+      if (v <= 50) return { side: 'OPP', num: v };
+      return { side: 'OWN', num: 100 - v };
+    }
+
+    function distBucket(toFirst) {
+      if (toFirst <= 3) return 0;
+      if (toFirst <= 7) return 1;
+      return 2;
+    }
+
+    const DOWN_LABELS = ['1ST', '2ND', '3RD', '4TH'];
+    const DOWN_WORDS  = ['', '1st', '2nd', '3rd', '4th'];
+
+    // ── Compute functions ─────────────────────────────────────────────────────
+
+    function computeRatio(plays) {
+      const run  = plays.filter(p => p.type === 'run').length;
+      const pass = plays.filter(p => p.type === 'pass').length;
+      return { run, pass, total: run + pass };
+    }
+
+    function computeTendencies(plays) {
+      const grid = Array.from({ length: 4 }, () =>
+        Array.from({ length: 3 }, () => ({ run: 0, pass: 0, runYards: 0, passYards: 0, n: 0 }))
+      );
+      plays.forEach(p => {
+        const r = (p.down || 1) - 1;
+        if (r < 0 || r > 3) return;
+        const c    = distBucket(p.toFirst || 10);
+        const cell = grid[r][c];
+        const yds  = p.yardsGained || 0;
+        if (p.type === 'run') { cell.run++; cell.runYards  += yds; }
+        else                  { cell.pass++; cell.passYards += yds; }
+        cell.n++;
+      });
+      return grid;
+    }
+
+    function computeOverallSuccess(plays) {
+      if (!plays.length) return { rate: 0, ok: 0, total: 0 };
+      let ok = 0;
+      plays.forEach(p => { if (isSuccess(p)) ok++; });
+      return { rate: Math.round(ok / plays.length * 100), ok, total: plays.length };
+    }
+
+    function computeFormationsTable(plays) {
+      const map = {};
+      plays.forEach(p => {
+        const name = p.formationName || '—';
+        if (!map[name]) map[name] = { name, ok: 0, n: 0, yards: 0 };
+        map[name].n++;
+        map[name].yards += p.yardsGained || 0;
+        if (isSuccess(p)) map[name].ok++;
+      });
+      return Object.values(map)
+        .map(f => ({ ...f,
+          avg: f.n ? +(f.yards / f.n).toFixed(1) : 0,
+          pct: f.n ? Math.round(f.ok / f.n * 100) : 0
+        }))
+        .sort((a, b) => b.pct - a.pct);
+    }
+
+    function computeConcepts(plays) {
+      const map = {};
+      plays.forEach(p => {
+        const key = (p.playName || '—') + '|||' + (p.formationName || '—');
+        if (!map[key]) map[key] = {
+          play: p.playName || '—',
+          formation: p.formationName || '—',
+          ok: 0, n: 0, yards: 0, instances: []
+        };
+        map[key].n++;
+        map[key].yards += p.yardsGained || 0;
+        if (isSuccess(p)) map[key].ok++;
+        map[key].instances.push(p);
+      });
+      return Object.values(map)
+        .map(c => ({ ...c,
+          avg: c.n ? +(c.yards / c.n).toFixed(1) : 0,
+          pct: c.n ? Math.round(c.ok / c.n * 100) : 0
+        }))
+        .sort((a, b) => b.pct - a.pct);
+    }
+
+    function computeKillers(plays) {
+      const map = {};
+      plays.forEach(p => {
+        if ((p.yardsGained || 0) > 0) return;
+        const front    = p.selectedFront    || '';
+        const coverage = p.selectedCoverage || '';
+        if (!front && !coverage) return;
+        const key = [front, coverage].filter(Boolean).join(' / ');
+        if (!map[key]) map[key] = { combo: key, n: 0, yards: 0 };
+        map[key].n++;
+        map[key].yards += p.yardsGained || 0;
+      });
+      return Object.values(map)
+        .sort((a, b) => b.n - a.n)
+        .slice(0, 3);
+    }
+
+    function computeDefUsage(plays) {
+      const fronts = {}, blitzes = {}, coverages = {};
+      plays.forEach(p => {
+        const yds = p.yardsGained || 0;
+        const ok  = isSuccess(p);
+        function tally(map, key) {
+          if (!key) return;
+          if (!map[key]) map[key] = { name: key, n: 0, yards: 0, ok: 0 };
+          map[key].n++;
+          map[key].yards += yds;
+          if (ok) map[key].ok++;
+        }
+        tally(fronts,    p.selectedFront    || '');
+        tally(blitzes,   p.selectedBlitz    || '');
+        tally(coverages, p.selectedCoverage || '');
+      });
+      const toArr = map => Object.values(map)
+        .map(v => ({ ...v,
+          avg: v.n ? +(v.yards / v.n).toFixed(1) : 0,
+          pct: v.n ? Math.round(v.ok / v.n * 100) : 0
+        }))
+        .sort((a, b) => b.n - a.n);
+      return { fronts: toArr(fronts), blitzes: toArr(blitzes), coverages: toArr(coverages) };
+    }
+
+    function computeDefTendencies(plays) {
+      const grid = Array.from({ length: 4 }, () =>
+        Array.from({ length: 3 }, () => ({ fronts: {}, blitzes: {}, coverages: {}, n: 0 }))
+      );
+      plays.forEach(p => {
+        const r = (p.down || 1) - 1;
+        if (r < 0 || r > 3) return;
+        const c    = distBucket(p.toFirst || 10);
+        const cell = grid[r][c];
+        cell.n++;
+        function tally(map, key) { if (key) map[key] = (map[key] || 0) + 1; }
+        tally(cell.fronts,    p.selectedFront    || '');
+        tally(cell.blitzes,   p.selectedBlitz    || '');
+        tally(cell.coverages, p.selectedCoverage || '');
+      });
+      return grid;
+    }
+
+    // ── Formation × Situation Matrix ──────────────────────────────────────────
+
+    const SITUATIONS = [
+      { label: '1 & 10',   fn: p => p.down === 1 && p.toFirst >= 10 },
+      { label: '2 & 10+',  fn: p => p.down === 2 && p.toFirst >= 10 },
+      { label: '2 & 5–9',  fn: p => p.down === 2 && p.toFirst >= 5 && p.toFirst <= 9 },
+      { label: '2 & 0–4',  fn: p => p.down === 2 && p.toFirst <= 4 },
+      { label: '3 & 10+',  fn: p => p.down === 3 && p.toFirst >= 10 },
+      { label: '3 & 5–9',  fn: p => p.down === 3 && p.toFirst >= 5 && p.toFirst <= 9 },
+      { label: '3 & 0–4',  fn: p => p.down === 3 && p.toFirst <= 4 },
+      { label: '4th',      fn: p => p.down === 4 },
+    ];
+
+    function computeFormationSituationMatrix(plays) {
+      const valid = plays.filter(p => !p.noPlay);
+      const formCount = {};
+      valid.forEach(p => {
+        const f = p.formationName || '(sin formación)';
+        formCount[f] = (formCount[f] || 0) + 1;
+      });
+      const formations = Object.entries(formCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name]) => name);
+
+      return formations.map(formation => {
+        const fPlays = valid.filter(p => (p.formationName || '(sin formación)') === formation);
+        const cells = SITUATIONS.map(sit => {
+          const sitPlays = fPlays.filter(sit.fn);
+          const run  = sitPlays.filter(p => p.type === 'run').length;
+          const pass = sitPlays.filter(p => p.type === 'pass').length;
+          const n    = sitPlays.length;
+          return { n, run, pass,
+            runPct:  n ? Math.round(run  / n * 100) : null,
+            passPct: n ? Math.round(pass / n * 100) : null,
+          };
+        });
+        const total     = fPlays.length;
+        const totalRun  = fPlays.filter(p => p.type === 'run').length;
+        const totalPass = fPlays.filter(p => p.type === 'pass').length;
+        return { formation, cells, total, totalRun, totalPass };
+      });
+    }
+
+    function formationSituationTableHTML(plays) {
+      const matrix = computeFormationSituationMatrix(plays);
+      if (!matrix.length) {
+        return `<div class="empty" style="padding:16px;">Sin jugadas registradas.</div>`;
+      }
+
+      function cellBg(cell) {
+        if (cell.n === 0 || cell.runPct === null) return '';
+        const rp = cell.runPct;
+        if (rp >= 70) return 'background:rgba(229,115,0,.22)';
+        if (rp >= 55) return 'background:rgba(229,115,0,.10)';
+        if (rp <= 30) return 'background:rgba(30,136,229,.22)';
+        if (rp <= 45) return 'background:rgba(30,136,229,.10)';
+        return 'background:rgba(255,255,255,.03)';
+      }
+
+      function cellHTML(cell) {
+        if (cell.n === 0) return `<td class="fsm-cell fsm-empty">—</td>`;
+        return `<td class="fsm-cell" style="${cellBg(cell)}">
+          <div class="fsm-rp">
+            <span class="fsm-r">${cell.runPct}%</span>
+            <span class="fsm-sep">/</span>
+            <span class="fsm-p">${cell.passPct}%</span>
+          </div>
+          <div class="fsm-n">${cell.n}j</div>
+        </td>`;
+      }
+
+      const headerCols = SITUATIONS.map(s => `<th class="fsm-th">${s.label}</th>`).join('');
+      const rows = matrix.map(row => {
+        const totalRunPct = row.total ? Math.round(row.totalRun / row.total * 100) : 0;
+        return `<tr>
+          <td class="fsm-formation">
+            <span class="fsm-form-name">${esc(row.formation)}</span>
+            <span class="fsm-form-total">${row.total}j · R${totalRunPct}%</span>
+          </td>
+          ${row.cells.map(cellHTML).join('')}
+        </tr>`;
+      }).join('');
+
+      return `
+        <div class="fsm-wrap">
+          <div class="fsm-legend">
+            <span class="fsm-leg-run">■ Run dominant</span>
+            <span class="fsm-leg-pass">■ Pass dominant</span>
+            <span class="fsm-leg-note">R% / P% por celda · mín. 1 jugada</span>
+          </div>
+          <div class="fsm-scroll">
+            <table class="fsm-table">
+              <thead>
+                <tr>
+                  <th class="fsm-th-form">Formación</th>
+                  ${headerCols}
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    // ── OPP / DEF Analysis helpers ────────────────────────────────────────────
+
+    function getOwnDefPlaybookFromStorage() {
+      try {
+        const saved = localStorage.getItem(TeamConfig.key('playsync_playbook_own_def'));
+        return saved ? JSON.parse(saved) : { fronts: [], blitzes: [], coverages: [] };
+      } catch { return { fronts: [], blitzes: [], coverages: [] }; }
+    }
+
+    function _defNameOpp(listKey, id) {
+      if (!id || id === 'none') return '';
+      const pb = getOwnDefPlaybookFromStorage();
+      return pb[listKey]?.find(x => x.id === id)?.name || id;
+    }
+
+    function oppPlays(history) {
+      const hasModes = history.some(p => p.mode);
+      return hasModes ? history.filter(p => p.mode === 'opp' && !p.noPlay) : [];
+    }
+
+    function isDefSuccess(p) {
+      if (p.result === 'TD' || p.result === '1st Down') return false;
+      if ((p.yardsGained || 0) >= 5) return false;
+      return true;
+    }
+
+    function computeOwnDefUsage(plays) {
+      const fronts = {}, blitzes = {}, coverages = {};
+      plays.forEach(p => {
+        const ok = isDefSuccess(p);
+        const y  = p.yardsGained || 0;
+        function tally(map, id, listKey) {
+          if (!id || id === 'none') return;
+          if (!map[id]) map[id] = { n: 0, ok: 0, yards: 0 };
+          map[id].n++;
+          if (ok) map[id].ok++;
+          map[id].yards += y;
+        }
+        tally(fronts,    p.selectedFront,    'fronts');
+        tally(blitzes,   p.selectedBlitz,    'blitzes');
+        tally(coverages, p.selectedCoverage, 'coverages');
+      });
+      const toArr = (map, listKey) => Object.entries(map)
+        .map(([id, v]) => ({
+          id,
+          name: _defNameOpp(listKey, id) || id,
+          n: v.n,
+          avg: v.n ? +(v.yards / v.n).toFixed(1) : 0,
+          pct: v.n ? Math.round(v.ok / v.n * 100) : 0
+        }))
+        .sort((a, b) => b.n - a.n);
+      return {
+        fronts:    toArr(fronts,    'fronts'),
+        blitzes:   toArr(blitzes,   'blitzes'),
+        coverages: toArr(coverages, 'coverages'),
+      };
+    }
+
+    function computeOppOffTendencies(plays) {
+      const grid = Array.from({ length: 4 }, () =>
+        Array.from({ length: 3 }, () => ({ formations: {}, types: {}, n: 0 }))
+      );
+      plays.forEach(p => {
+        const r = (p.down || 1) - 1;
+        if (r < 0 || r > 3) return;
+        const c    = distBucket(p.toFirst || 10);
+        const cell = grid[r][c];
+        cell.n++;
+        if (p.formationName) cell.formations[p.formationName] = (cell.formations[p.formationName] || 0) + 1;
+        if (p.type)          cell.types[p.type]               = (cell.types[p.type]               || 0) + 1;
+      });
+      return grid;
+    }
+
+    function computeOppKillers(plays) {
+      const map = {};
+      plays.forEach(p => {
+        if (!p.playName && !p.formationName) return;
+        const key = `${p.formationName || '?'} — ${p.playName || '?'}`;
+        if (!map[key]) map[key] = { n: 0, yards: 0 };
+        map[key].n++;
+        map[key].yards += (p.yardsGained || 0);
+      });
+      return Object.entries(map)
+        .map(([combo, v]) => ({ combo, n: v.n, avg: v.n ? +(v.yards / v.n).toFixed(1) : 0 }))
+        .filter(k => k.n >= 2)
+        .sort((a, b) => b.avg - a.avg)
+        .slice(0, 6);
+    }
+
+    function computeBlitzReport(plays) {
+      return [1,2,3,4].map(dn => {
+        const dnPlays  = plays.filter(p => p.down === dn);
+        const blitzed  = dnPlays.filter(p => p.selectedBlitz && p.selectedBlitz !== 'none');
+        const noBlitz  = dnPlays.filter(p => !p.selectedBlitz || p.selectedBlitz === 'none');
+        return {
+          down: dn,
+          total: dnPlays.length,
+          blitzPct: dnPlays.length ? Math.round(blitzed.length / dnPlays.length * 100) : 0,
+          avgYdsBlitz:   blitzed.length ? +(blitzed.reduce((s,p) => s + (p.yardsGained||0), 0) / blitzed.length).toFixed(1) : null,
+          avgYdsNoBlitz: noBlitz.length ? +(noBlitz.reduce((s,p) => s + (p.yardsGained||0), 0) / noBlitz.length).toFixed(1) : null,
+        };
+      });
+    }
+
+    // ── Render helpers ────────────────────────────────────────────────────────
+
+    function defUsageHTML(data) {
+      function miniTable(title, rows) {
+        if (!rows.length) return `
+          <div class="def-section">
+            <div class="def-section-title">${title}</div>
+            <div class="empty" style="padding:8px 0;font-size:11px;">Sin datos</div>
+          </div>`;
+        const body = rows.map(r => {
+          const cls = r.pct >= 60 ? 'good' : r.pct >= 40 ? 'mid' : 'bad';
+          const avgStr = r.avg > 0 ? `+${r.avg}` : `${r.avg}`;
+          return `<tr>
+            <td>${esc(r.name)}</td>
+            <td>${r.n}</td>
+            <td>${avgStr}</td>
+            <td><span class="at-pct ${cls}">${r.pct}%</span></td>
+          </tr>`;
+        }).join('');
+        return `
+          <div class="def-section">
+            <div class="def-section-title">${title}</div>
+            <table class="analysis-table" style="font-size:12px;">
+              <thead><tr><th>Nombre</th><th>N</th><th>Avg</th><th>Éxito</th></tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>`;
+      }
+      const hasAny = data.fronts.length || data.blitzes.length || data.coverages.length;
+      if (!hasAny) return `<div class="empty">Sin datos de defensiva registrados</div>`;
+      return `<div class="def-usage-grid">
+        ${miniTable('Fronts', data.fronts)}
+        ${miniTable('Blitzes', data.blitzes)}
+        ${miniTable('Coverages', data.coverages)}
+      </div>`;
+    }
+
+    function defTendencyTableHTML(grid) {
+      const COLS = ['CORTO ≤3', 'MEDIO 4–7', 'LARGO 8+'];
+
+      function sectionHTML(map, total, colorVar) {
+        const entries = Object.entries(map)
+          .filter(([k]) => k)
+          .sort((a, b) => b[1] - a[1]);
+        if (!entries.length) return '';
+        return `<div class="def-cell-section">${
+          entries.map(([k, n]) => {
+            const pct = Math.round(n / total * 100);
+            return `<div class="def-cell-item">
+              <span class="def-cell-name" style="color:${colorVar};">${esc(k)}</span>
+              <span class="def-cell-pct" style="color:${colorVar};opacity:.75;">${pct}%</span>
+            </div>`;
+          }).join('')
+        }</div>`;
+      }
+
+      let html = `<table class="tend-table"><thead><tr>
+        <th></th>${COLS.map(c => `<th>${c}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+      grid.forEach((row, ri) => {
+        html += `<tr><td>${DOWN_LABELS[ri]}</td>`;
+        row.forEach(cell => {
+          if (cell.n === 0) {
+            html += `<td><span class="cell-type empty">—</span></td>`;
+          } else {
+            const fHtml = sectionHTML(cell.fronts,    cell.n, 'var(--text)');
+            const bHtml = sectionHTML(cell.blitzes,   cell.n, 'var(--warn)');
+            const cHtml = sectionHTML(cell.coverages, cell.n, 'var(--pass)');
+            const sep   = '<div class="def-cell-sep"></div>';
+            const parts = [fHtml, bHtml, cHtml].filter(Boolean);
+            html += `<td>
+              <div class="def-cell">
+                ${parts.join(sep)}
+                <div class="cell-cnt" style="margin-top:3px;">${cell.n}j</div>
+              </div>
+            </td>`;
+          }
+        });
+        html += `</tr>`;
+      });
+
+      return html + `</tbody></table>`;
+    }
+
+    function ratioRowHTML(label, r) {
+      if (r.total === 0) {
+        return `<div class="ratio-row">
+          <div class="ratio-label">${label}</div>
+          <div class="empty" style="padding:8px 0;text-align:left;color:var(--text-muted);font-size:12px;">Sin jugadas</div>
+        </div>`;
+      }
+      const rPct = Math.round(r.run  / r.total * 100);
+      const pPct = 100 - rPct;
+      return `<div class="ratio-row">
+        <div class="ratio-label">${label}</div>
+        <div class="ratio-numbers">
+          <span class="ratio-num run">${r.run}</span>
+          <span class="ratio-type">RUN</span>
+          <span class="ratio-num pass">${r.pass}</span>
+          <span class="ratio-type">PASS</span>
+          <span class="ratio-pct">${rPct}% / ${pPct}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-run"  style="width:${rPct}%"></div>
+          <div class="bar-pass" style="width:${pPct}%"></div>
+        </div>
+      </div>`;
+    }
+
+    function tendencyTableHTML(grid) {
+      const COLS = ['CORTO ≤3', 'MEDIO 4–7', 'LARGO 8+'];
+      let html = `<table class="tend-table"><thead><tr>
+        <th></th>${COLS.map(c => `<th>${c}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+      grid.forEach((row, ri) => {
+        html += `<tr><td>${DOWN_LABELS[ri]}</td>`;
+        row.forEach(cell => {
+          if (cell.n === 0) {
+            html += `<td><span class="cell-type empty">—</span></td>`;
+          } else {
+            const runPct  = Math.round(cell.run  / cell.n * 100);
+            const passPct = 100 - runPct;
+            const runAvg  = cell.run  ? (cell.runYards  / cell.run).toFixed(1)  : '—';
+            const passAvg = cell.pass ? (cell.passYards / cell.pass).toFixed(1) : '—';
+            html += `<td>
+              <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
+                <span class="cell-type run">${runPct}%</span>
+                <span class="cell-type" style="color:var(--text-muted);font-weight:400;">/</span>
+                <span class="cell-type pass">${passPct}%</span>
+              </div>
+              <div class="cell-yds" style="margin-top:3px;">
+                <span style="color:var(--run);">${runAvg}</span>
+                <span style="color:var(--text-muted);font-size:8px;"> R </span>
+                <span style="color:var(--pass);">${passAvg}</span>
+                <span style="color:var(--text-muted);font-size:8px;"> P</span>
+              </div>
+              <div class="cell-cnt">${cell.n}j</div>
+            </td>`;
+          }
+        });
+        html += `</tr>`;
+      });
+
+      return html + `</tbody></table>`;
+    }
+
+    function successCardHTML(s) {
+      if (s.total === 0) {
+        return `<div class="success-card"><div class="empty" style="padding:8px 0;">Sin jugadas registradas</div></div>`;
+      }
+      const cls  = s.rate >= 60 ? 'good' : s.rate >= 40 ? 'mid' : 'bad';
+      const fill = s.rate >= 60 ? 'var(--success)' : s.rate >= 40 ? 'var(--warn)' : 'var(--danger)';
+      return `<div class="success-card">
+        <div>
+          <div class="success-label">Tasa de Éxito Global</div>
+          <div class="success-big ${cls}">${s.rate}%</div>
+          <div class="success-fraction">${s.ok} de ${s.total} jugadas</div>
+        </div>
+        <div class="success-bar-track">
+          <div class="success-bar-fill" style="width:${s.rate}%;background:${fill};"></div>
+        </div>
+      </div>`;
+    }
+
+    function formationsTableHTML(rows) {
+      if (!rows.length) return `<div class="empty">Sin jugadas registradas</div>`;
+      const body = rows.map(f => {
+        const cls = f.pct >= 60 ? 'good' : f.pct >= 40 ? 'mid' : 'bad';
+        return `<tr>
+          <td>${esc(f.name)}</td>
+          <td>${f.n}</td>
+          <td>${f.yards}</td>
+          <td>${f.avg}</td>
+          <td><span class="at-pct ${cls}">${f.pct}%</span></td>
+        </tr>`;
+      }).join('');
+      return `<table class="analysis-table">
+        <thead><tr>
+          <th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>Éxito %</th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>`;
+    }
+
+    function conceptsTableHTML(concepts) {
+      if (!concepts.length) return `<div class="empty">Sin jugadas registradas</div>`;
+
+      const rows = concepts.map((c, idx) => {
+        const id  = `concept-${idx}`;
+        const cls = c.pct >= 60 ? 'good' : c.pct >= 40 ? 'mid' : 'bad';
+
+        const detailRows = c.instances.map(p => {
+          const ok = isSuccess(p);
+          // yardDisplay: positive = opp territory, negative = own territory
+          const yd = p.yardDisplay != null ? p.yardDisplay : 0;
+          const ylStr = yd >= 0 ? `OPP ${yd}` : `OWN ${Math.abs(yd)}`;
+          return `<tr>
+            <td>${p.down || '—'}</td>
+            <td>${p.toFirst || '—'}</td>
+            <td>${ylStr}</td>
+            <td>${p.yardsGained != null ? p.yardsGained : '—'}</td>
+            <td><span class="result-tag ${ok ? 'success' : 'failure'}">${esc(p.result || (ok ? 'Éxito' : 'Fallo'))}</span></td>
+            <td>${p.playerNumber != null ? p.playerNumber : '—'}</td>
+            <td>${esc(p.selectedFront    || '—')}</td>
+            <td>${esc(p.selectedBlitz    || '—')}</td>
+            <td>${esc(p.selectedCoverage || '—')}</td>
+            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.notes || '')}</td>
+          </tr>`;
+        }).join('');
+
+        return `<tr>
+            <td>${esc(c.play)}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${esc(c.formation)}</td>
+            <td>${c.n}</td>
+            <td>${c.yards}</td>
+            <td>${c.avg}</td>
+            <td><span class="at-pct ${cls}">${c.pct}%</span></td>
+            <td><button class="expand-btn" data-target="${id}">&#8964;</button></td>
+          </tr>
+          <tr class="detail-row" id="${id}">
+            <td class="detail-cell" colspan="7">
+              <div class="detail-inner">
+                <table class="detail-table">
+                  <thead><tr>
+                    <th>Down</th><th>Distance</th><th>Yardline</th><th>Yds</th>
+                    <th>Resultado</th><th>#</th><th>Front</th><th>Blitz</th><th>Cob.</th><th>Notas</th>
+                  </tr></thead>
+                  <tbody>${detailRows}</tbody>
+                </table>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      return `<table class="analysis-table" id="concepts-table">
+        <thead><tr>
+          <th>Jugada</th><th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>Éxito %</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    function killersHTML(killers) {
+      if (!killers.length) return `<div class="empty">Sin combinaciones registradas</div>`;
+      const maxN = killers[0].n;
+      return killers.map((k, i) => {
+        const avg  = (k.yards / k.n).toFixed(1);
+        const barW = Math.round(k.n / maxN * 100);
+        return `<div class="killer-row">
+          <div class="killer-rank-row">
+            <span class="killer-num">${i + 1}</span>
+            <span class="killer-combo">${esc(k.combo)}</span>
+          </div>
+          <div class="killer-bar-track">
+            <div class="killer-bar-fill" style="width:${barW}%"></div>
+          </div>
+          <div class="killer-stats">
+            <span class="killer-count">${k.n} vez${k.n !== 1 ? 'es' : ''}</span>
+            <span class="killer-avg">${avg} yds avg</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Event wiring ──────────────────────────────────────────────────────────
+
+    function attachConceptExpanders() {
+      const tbl = document.getElementById('concepts-table');
+      if (!tbl) return;
+      tbl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.expand-btn');
+        if (!btn) return;
+        const id  = btn.dataset.target;
+        const row = document.getElementById(id);
+        if (!row) return;
+        const isOpen = row.classList.contains('open');
+        // Collapse all (accordion)
+        tbl.querySelectorAll('.detail-row.open').forEach(r => r.classList.remove('open'));
+        tbl.querySelectorAll('.expand-btn.open').forEach(b => b.classList.remove('open'));
+        if (!isOpen) {
+          row.classList.add('open');
+          btn.classList.add('open');
+        }
+      });
+    }
+
+    function attachTabSwitcher() {
+      const bar = document.querySelector('.tab-bar');
+      if (!bar) return;
+      bar.addEventListener('click', function(e) {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const panel = document.querySelector(`.tab-panel[data-panel="${btn.dataset.tab}"]`);
+        if (panel) panel.classList.add('active');
+      });
+    }
+
+    // ── Main render ───────────────────────────────────────────────────────────
+
+    function _logoHTML() {
+      const cfg  = TeamConfig.get();
+      const code = TeamConfig.getActiveTeam() || '';
+      const name = cfg.name || code;
+      if (cfg.logo) {
+        return `<div class="logo-icon"><img src="${cfg.logo}" alt="${esc(name)}"></div>
+                <span class="logo-text">${esc(name)}</span>`;
+      }
+      const initials = cfg.initials || name.slice(0,2).toUpperCase();
+      const bg       = cfg.color || '#004992';
+      return `<div class="logo-icon" style="background:${bg}">${esc(initials)}</div>
+              <span class="logo-text">${esc(name)}</span>`;
+    }
+
+    function render() {
+      if (!TeamConfig.requireTeam()) return;
+      TeamConfig.apply();
+      const root  = document.getElementById('root');
+      const state = loadState();
+
+      // Preserve UI state across re-renders
+      const openConcept = document.querySelector('.detail-row.open')?.id || null;
+      const activeTab   = document.querySelector('.tab-btn.active')?.dataset.tab || 'own';
+
+      if (!state) {
+        root.innerHTML = `
+          <header id="topbar">
+            <div class="logo">${_logoHTML()}</div>
+            <nav class="main-nav">
+              <a class="nav-link" href="game.html">GAME</a>
+              <a class="nav-link" href="playbook.html">PLAYBOOK</a>
+              <a class="nav-link active" href="analysis.html">ANALYSIS</a>
+            </nav>
+          </header>
+          <div class="no-game">
+            <div class="no-game-icon">📋</div>
+            <div class="no-game-title">Sin partido activo</div>
+            <div class="no-game-sub">Abre PlaySync en la otra pestaña y selecciona o crea un partido.</div>
+          </div>`;
+        return;
+      }
+
+      const history = state.history || [];
+      const own     = ownPlays(history);
+
+      // Current drive plays
+      const driveIdx  = typeof state.currentDriveStart === 'number' ? state.currentDriveStart : 0;
+      const driveOwn  = ownPlays(history.slice(driveIdx));
+
+      // Scoreboard values
+      const quarter  = state.quarter === 'OT' ? 'OT' : `Q${state.quarter}`;
+      const downStr  = `${DOWN_WORDS[state.down] || ''} & ${state.toFirst}`;
+      const yl       = parseYardLine(state.oppYardLine || 50);
+      const fieldStr = `${yl.side} ${yl.num}`;
+
+      // Compute all stats
+      const gameRatio     = computeRatio(own);
+      const driveRatio    = computeRatio(driveOwn);
+      const tendencies    = computeTendencies(own);
+      const overallSuccess  = computeOverallSuccess(own);
+      const formationsTable = computeFormationsTable(own);
+      const concepts        = computeConcepts(own);
+      const killers         = computeKillers(own);
+      const defUsage        = computeDefUsage(own);
+      const defTend         = computeDefTendencies(own);
+
+      // OPP tab
+      const opp           = oppPlays(history);
+      const ownDefUsage   = computeOwnDefUsage(opp);
+      const oppOffTend    = computeOppOffTendencies(opp);
+      const oppKillers    = computeOppKillers(opp);
+      const blitzReport   = computeBlitzReport(opp);
+      const oppRunPass    = {
+        runs: opp.filter(p => p.type === 'run').length,
+        pass: opp.filter(p => p.type === 'pass').length,
+      };
+
+      const now = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      root.innerHTML = `
+        <!-- Topbar -->
+        <header id="topbar">
+          <div class="logo">${_logoHTML()}</div>
+          <nav class="main-nav">
+            <a class="nav-link" href="game.html">GAME</a>
+            <a class="nav-link" href="playbook.html">PLAYBOOK</a>
+            <a class="nav-link active" href="analysis.html">ANALYSIS</a>
+          </nav>
+          <div class="tb-right">
+            <div class="tb-score">
+              <div class="tb-team">
+                <div class="tb-team-name">${esc(state.teamHome)}</div>
+                <div class="tb-score-num">${state.scoreHome}</div>
+              </div>
+              <span class="tb-sep">–</span>
+              <div class="tb-team">
+                <div class="tb-team-name">${esc(state.teamAway)}</div>
+                <div class="tb-score-num">${state.scoreAway}</div>
+              </div>
+            </div>
+            <div class="tb-situation">
+              <div class="tb-quarter">${quarter}</div>
+              <div class="tb-down-field">${downStr} · ${fieldStr}</div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <button class="tab-btn" data-tab="own">Ofensiva (OWN)</button>
+          <button class="tab-btn" data-tab="opp">Rival (OPP)</button>
+        </div>
+
+        <div class="refresh-bar">
+          <span><span class="live-dot"></span>En vivo · refresca cada 8s · ${now}</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span>${own.length} jugadas propias</span>
+            <button id="print-btn" onclick="window.print()">⬇ PDF</button>
+          </div>
+        </div>
+
+        <div class="page">
+
+          <!-- OWN TAB -->
+          <div class="tab-panel" data-panel="own">
+
+            <!-- Print-only header -->
+            <div class="print-header col-full" style="border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:2px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                <div>
+                  <div style="font-size:14px;font-weight:900;">${esc(state.teamHome)} <span style="font-weight:400;font-size:11px;">vs</span> ${esc(state.teamAway)}</div>
+                  <div style="font-size:9px;color:#555;margin-top:1px;">${esc(state.teamHome)} ${state.scoreHome} — ${esc(state.teamAway)} ${state.scoreAway} &nbsp;·&nbsp; ${quarter} &nbsp;·&nbsp; ${downStr} &nbsp;·&nbsp; ${own.length} jugadas</div>
+                </div>
+                <div style="font-size:8px;color:#777;">Analysis OWN &nbsp;·&nbsp; ${new Date().toLocaleDateString('es-MX')}</div>
+              </div>
+            </div>
+
+            <!-- Col 1: Success rate -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Efectividad Ofensiva</span>
+              </div>
+              ${successCardHTML(overallSuccess)}
+            </div>
+
+            <!-- Col 2: Run/Pass ratio -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Run / Pass</span>
+              </div>
+              <div class="card-body ratio-section">
+                ${ratioRowHTML('Drive actual', driveRatio)}
+                <div class="ratio-divider"></div>
+                ${ratioRowHTML('Partido completo', gameRatio)}
+              </div>
+            </div>
+
+            <!-- Col 1: Tendencias ofensivas -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Tendencias por Down y Distancia</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${tendencyTableHTML(tendencies)}
+              </div>
+            </div>
+
+            <!-- Col 2: Defense tendencies by down/distance -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Defensiva Rival por Down y Distancia</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${defTendencyTableHTML(defTend)}
+              </div>
+            </div>
+
+            <!-- Full width: Defense usage -->
+            <div class="card col-full">
+              <div class="card-head">
+                <span class="card-title">Defensiva Rival — Front / Blitz / Coverage</span>
+              </div>
+              ${defUsageHTML(defUsage)}
+            </div>
+
+            <!-- Col 1: Formations -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Formaciones</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${formationsTableHTML(formationsTable)}
+              </div>
+            </div>
+
+            <!-- Col 2: Defense killers -->
+            <div class="card no-print">
+              <div class="card-head">
+                <span class="card-title">Te han detenido</span>
+              </div>
+              ${killersHTML(killers)}
+            </div>
+
+            <!-- Full width: Concepts/plays table -->
+            <div class="card col-full no-print">
+              <div class="card-head">
+                <span class="card-title">Conceptos y Jugadas</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${conceptsTableHTML(concepts)}
+              </div>
+            </div>
+
+            <!-- Full width: Formation × Situation matrix -->
+            <div class="card col-full no-print">
+              <div class="card-head">
+                <span class="card-title">Formaciones por Situación — Run / Pass</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${formationSituationTableHTML(own)}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- OPP TAB -->
+          <div class="tab-panel" data-panel="opp">
+            ${opp.length === 0 ? `
+              <div class="card">
+                <div class="opp-placeholder">
+                  <div class="opp-placeholder-icon">🔭</div>
+                  <div class="opp-placeholder-title">Sin jugadas OPP</div>
+                  <div class="opp-placeholder-sub">Activa el modo OPP en GAME para capturar la ofensiva rival.</div>
+                </div>
+              </div>
+            ` : `
+
+            <!-- Card 1: Resumen -->
+            <div class="card">
+              <div class="card-head"><span class="card-title">RESUMEN DEFENSIVO</span></div>
+              <div class="def-summary-bar">
+                <div class="def-summary-stat">
+                  <span class="def-summary-val">${opp.length}</span>
+                  <span class="def-summary-lbl">Jugadas</span>
+                </div>
+                <div class="def-summary-stat">
+                  <span class="def-summary-val" style="color:var(--run);">${oppRunPass.runs && opp.length ? Math.round(oppRunPass.runs/opp.length*100) : 0}%</span>
+                  <span class="def-summary-lbl">Run rival</span>
+                </div>
+                <div class="def-summary-stat">
+                  <span class="def-summary-val" style="color:var(--pass);">${oppRunPass.pass && opp.length ? Math.round(oppRunPass.pass/opp.length*100) : 0}%</span>
+                  <span class="def-summary-lbl">Pass rival</span>
+                </div>
+                <div class="def-summary-stat">
+                  <span class="def-summary-val" style="color:${Math.round(opp.filter(isDefSuccess).length/opp.length*100) >= 60 ? 'var(--success)' : Math.round(opp.filter(isDefSuccess).length/opp.length*100) >= 40 ? 'var(--warn)' : 'var(--danger)'};">${Math.round(opp.filter(isDefSuccess).length/opp.length*100)}%</span>
+                  <span class="def-summary-lbl">Éxito def.</span>
+                </div>
+                <div class="def-summary-stat">
+                  <span class="def-summary-val">${oppRunPass.runs}</span>
+                  <span class="def-summary-lbl">Carreras</span>
+                </div>
+                <div class="def-summary-stat">
+                  <span class="def-summary-val">${oppRunPass.pass}</span>
+                  <span class="def-summary-lbl">Pases</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Formaciones Rivales por Situación -->
+            <div class="card col-full">
+              <div class="card-head">
+                <span class="card-title">Formaciones Rivales por Situación — Run / Pass</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                ${formationSituationTableHTML(opp)}
+              </div>
+            </div>
+
+            <!-- Card 3: Tendencias ofensivas del rival -->
+            <div class="card">
+              <div class="card-head"><span class="card-title">TENDENCIAS RIVAL — DOWN × DISTANCIA</span></div>
+              <div class="card-body" style="padding:0;">
+                ${(() => {
+                  const COLS = ['CORTO ≤3', 'MEDIO 4–7', 'LARGO 8+'];
+                  let html = `<table class="tend-table"><thead><tr>
+                    <th></th>${COLS.map(c => `<th>${c}</th>`).join('')}
+                  </tr></thead><tbody>`;
+                  oppOffTend.forEach((row, ri) => {
+                    html += `<tr><td>${DOWN_LABELS[ri]}</td>`;
+                    row.forEach(cell => {
+                      if (cell.n === 0) {
+                        html += `<td><span class="cell-type empty">—</span></td>`;
+                      } else {
+                        const topForm = Object.entries(cell.formations).sort((a,b)=>b[1]-a[1])[0];
+                        const runs  = cell.types['run']  || 0;
+                        const passes = cell.types['pass'] || 0;
+                        const runPct  = Math.round(runs  / cell.n * 100);
+                        const passPct = 100 - runPct;
+                        html += `<td>
+                          <div class="opp-tend-cell">
+                            ${topForm ? `<div class="opp-tend-form">${esc(topForm[0])}</div>` : ''}
+                            <div class="opp-tend-ratio">
+                              <span class="r">${runPct}%R</span>
+                              <span style="color:var(--text-muted);font-weight:400;"> / </span>
+                              <span class="p">${passPct}%P</span>
+                            </div>
+                            <div class="opp-tend-n">${cell.n}j</div>
+                          </div>
+                        </td>`;
+                      }
+                    });
+                    html += `</tr>`;
+                  });
+                  return html + `</tbody></table>`;
+                })()}
+              </div>
+            </div>
+
+            <!-- Card 3: Nuestra Defensa -->
+            <div class="card">
+              <div class="card-head"><span class="card-title">NUESTRA DEFENSA — FRONT / BLITZ / COVERAGE</span></div>
+              <div class="card-body" style="padding:0;display:flex;flex-wrap:wrap;">
+                ${['fronts','blitzes','coverages'].map((key, ki) => {
+                  const titles = ['FRONT','BLITZ','COVERAGE'];
+                  const rows = ownDefUsage[key];
+                  if (!rows.length) return `
+                    <div class="def-section">
+                      <div class="def-section-title">${titles[ki]}</div>
+                      <div class="empty" style="padding:8px 0;font-size:11px;">Sin datos</div>
+                    </div>`;
+                  const body = rows.map(r => {
+                    const cls = r.pct >= 60 ? 'good' : r.pct >= 40 ? 'mid' : 'bad';
+                    const avgStr = r.avg > 0 ? `+${r.avg}` : `${r.avg}`;
+                    return `<tr>
+                      <td>${esc(r.name)}</td>
+                      <td>${r.n}</td>
+                      <td>${avgStr}</td>
+                      <td><span class="at-pct ${cls}">${r.pct}%</span></td>
+                    </tr>`;
+                  }).join('');
+                  return `
+                    <div class="def-section">
+                      <div class="def-section-title">${titles[ki]}</div>
+                      <table class="analysis-table">
+                        <thead><tr><th>Nombre</th><th>N</th><th>Avg</th><th>Éxito</th></tr></thead>
+                        <tbody>${body}</tbody>
+                      </table>
+                    </div>`;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Card 4: Blitz Report -->
+            <div class="card">
+              <div class="card-head"><span class="card-title">BLITZ REPORT</span></div>
+              <div class="card-body" style="padding:0;">
+                <table class="blitz-table">
+                  <thead>
+                    <tr>
+                      <th>Down</th>
+                      <th>Jugadas</th>
+                      <th>% Blitz</th>
+                      <th>Avg c/Blitz</th>
+                      <th>Avg s/Blitz</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${blitzReport.map(r => {
+                      if (r.total === 0) return `
+                        <tr>
+                          <td>${DOWN_WORDS[r.down]}</td>
+                          <td>0</td><td>—</td><td>—</td><td>—</td>
+                        </tr>`;
+                      const bVal = r.avgYdsBlitz   !== null ? r.avgYdsBlitz   : '—';
+                      const nVal = r.avgYdsNoBlitz  !== null ? r.avgYdsNoBlitz : '—';
+                      const bBetter = r.avgYdsBlitz !== null && r.avgYdsNoBlitz !== null && r.avgYdsBlitz < r.avgYdsNoBlitz;
+                      const nBetter = r.avgYdsBlitz !== null && r.avgYdsNoBlitz !== null && r.avgYdsNoBlitz < r.avgYdsBlitz;
+                      return `
+                        <tr>
+                          <td>${DOWN_WORDS[r.down]}</td>
+                          <td>${r.total}</td>
+                          <td>${r.blitzPct}%</td>
+                          <td class="${bBetter ? 'blitz-better' : bVal !== '—' && nBetter ? 'blitz-worse' : ''}">${bVal !== '—' ? bVal+'y' : '—'}</td>
+                          <td class="${nBetter ? 'blitz-better' : nVal !== '—' && bBetter ? 'blitz-worse' : ''}">${nVal !== '—' ? nVal+'y' : '—'}</td>
+                        </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Card 5: Jugadas Killer del Rival -->
+            <div class="card">
+              <div class="card-head"><span class="card-title">JUGADAS KILLER DEL RIVAL</span></div>
+              ${oppKillers.length === 0 ? `
+                <div class="card-body">
+                  <div class="empty" style="font-size:12px;">Sin combos con ≥2 repeticiones aún.</div>
+                </div>
+              ` : oppKillers.map(k => `
+                <div class="killer-row">
+                  <span class="killer-combo">${esc(k.combo)}</span>
+                  <div style="display:flex;gap:10px;margin-top:2px;">
+                    <span class="killer-count">${k.n}×</span>
+                    <span class="killer-avg" style="color:var(--warn);">${k.avg}y avg</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            `}
+          </div>
+
+        </div>
+      `;
+
+      // Wire interactivity
+      attachConceptExpanders();
+      attachTabSwitcher();
+
+      // Restore active tab
+      const tabBtn = document.querySelector(`.tab-btn[data-tab="${activeTab}"]`);
+      if (tabBtn) tabBtn.click();
+      else document.querySelector('.tab-btn[data-tab="own"]').click();
+
+      // Restore open concept row
+      if (openConcept) {
+        const row = document.getElementById(openConcept);
+        if (row) {
+          row.classList.add('open');
+          const btn = document.querySelector(`.expand-btn[data-target="${openConcept}"]`);
+          if (btn) btn.classList.add('open');
+        }
+      }
+    }
+
+    render();
+    setInterval(render, 8000);
+  </script>
+</body>
+</html>

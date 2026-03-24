@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Playbook — DataBlitz</title>
+  <script src="js/teamConfig.js"></script>
+  <script src="js/data.js"></script>
+  <style>
+    /* ── Tokens (from tokens.css) ── */
+    :root {
+      --bg:             #0f1923;
+      --bg-mid:         #141f2e;
+      --bg-panel:       #1a2535;
+      --bg-card:        #1e2d3d;
+      --bg-item:        #243447;
+      --bg-item-hover:  #2a3d54;
+      --bg-selected:    #1a3650;
+      --border:         #243040;
+      --border-light:   #2d3f55;
+      --text-primary:   #ffffff;
+      --text-secondary: #8ba3be;
+      --text-muted:     #4a6278;
+      --accent-blue:    #2196f3;
+      --accent-orange:  #ff6b00;
+      --run-color:      #e53935;
+      --run-bg:         rgba(229,57,53,.18);
+      --pass-color:     #2196f3;
+      --pass-bg:        rgba(33,150,243,.18);
+      --r-sm:           6px;
+      --r-md:           10px;
+      --topbar-h:       56px;
+      --tabbar-h:       40px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: none; outline: none; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Topbar ── */
+    #topbar {
+      height: var(--topbar-h);
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 7px; }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: #004992;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: #fff;
+    }
+    .logo-text {
+      font-size: 17px; font-weight: 700;
+      color: var(--text-primary); letter-spacing: -0.3px;
+    }
+    .main-nav { display: flex; gap: 2px; margin-left: 12px; }
+    .nav-link {
+      padding: 0 10px; height: 30px;
+      display: flex; align-items: center;
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 1px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: var(--r-sm);
+      transition: color .15s;
+    }
+    .nav-link:hover  { color: var(--text-primary); }
+    .nav-link.active { color: #00c896; }
+
+    /* ── Tab bar ── */
+    #tab-bar {
+      height: var(--tabbar-h);
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      padding: 0 12px;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    .pb-tab {
+      padding: 0 16px;
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 1px;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .pb-tab:hover { color: var(--text-secondary); }
+    .pb-tab[data-tab="own-off"].active,
+    .pb-tab[data-tab="own-def"].active { color: #00c896; border-bottom-color: #00c896; }
+    .pb-tab[data-tab="opp-off"].active,
+    .pb-tab[data-tab="opp-def"].active { color: #e85d30; border-bottom-color: #e85d30; }
+    .pb-tab[data-tab="st"].active,
+    .pb-tab[data-tab="st-def"].active  { color: #f5a623; border-bottom-color: #f5a623; }
+
+    /* ── Main panel ── */
+    #main-panel {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Column ── */
+    .pb-col {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+      flex: 1;
+      min-width: 0;
+    }
+    .pb-col:last-child { border-right: none; }
+    .pb-col.col-formations { flex: 0 0 230px; }
+
+    /* ── Column header ── */
+    .pb-col-header {
+      height: 38px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .pb-col-title {
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-weight: 700; font-size: 11px; letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .pb-reset-btn {
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      padding: 3px 7px;
+      border-radius: 4px;
+      transition: color .12s;
+    }
+    .pb-reset-btn:hover { color: #f5c518; }
+
+    /* ── List ── */
+    .pb-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    .pb-list::-webkit-scrollbar { width: 4px; }
+    .pb-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+    /* ── Item row ── */
+    .pb-item {
+      display: flex; align-items: center; gap: 6px;
+      height: 34px;
+      padding: 0 8px;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .pb-item:hover    { background: var(--bg-item-hover); }
+    .pb-item.selected { background: var(--bg-selected); }
+
+    .pb-item-name {
+      flex: 1;
+      font-size: 13px; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pb-item-actions {
+      display: flex; gap: 2px;
+      opacity: 0; transition: opacity .1s;
+    }
+    .pb-item:hover .pb-item-actions { opacity: 1; }
+
+    /* ── Icon buttons ── */
+    .icon-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 6px;
+      color: var(--text-secondary); text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .icon-btn:hover { background: var(--bg-item); color: var(--text-primary); }
+    .pb-icon-btn {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background .1s, color .1s;
+    }
+    .pb-icon-btn:hover         { background: var(--bg-item); color: var(--text-primary); }
+    .pb-icon-btn.del:hover     { color: #ef4444 !important; }
+    .pb-icon-btn.always-show   { opacity: 1 !important; }
+
+    /* ── Type badge (read mode) ── */
+    .pb-badge {
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      padding: 2px 5px; border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .pb-badge.run  { background: var(--run-bg);  color: var(--run-color);  }
+    .pb-badge.pass { background: var(--pass-bg); color: var(--pass-color); }
+
+    /* ── Add row ── */
+    .pb-add-row {
+      padding: 5px 6px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .pb-add-btn {
+      display: flex; align-items: center; gap: 6px;
+      width: 100%; height: 28px;
+      padding: 0 6px;
+      border-radius: var(--r-sm);
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      text-align: left;
+    }
+    .pb-add-btn:hover { background: var(--bg-item); color: var(--text-secondary); }
+
+    /* ── Inline input ── */
+    .pb-inline-input {
+      flex: 1; height: 26px; min-width: 0;
+      background: var(--bg-item);
+      border: 1px solid var(--accent-blue);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 13px;
+      padding: 0 7px;
+    }
+    .pb-inline-input:focus { outline: none; }
+
+    /* ── Inline add form ── */
+    .pb-add-form {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 8px;
+      background: var(--bg-item);
+      border-top: 1px solid var(--border-light);
+    }
+
+    /* ── Type toggle (in add/edit forms) ── */
+    .pb-type-toggle {
+      display: flex;
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .pb-type-btn {
+      padding: 3px 8px;
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background .1s, color .1s;
+    }
+    .pb-type-btn.run.active  { background: var(--run-bg);  color: var(--run-color);  }
+    .pb-type-btn.pass.active { background: var(--pass-bg); color: var(--pass-color); }
+
+    /* ── Toast ── */
+    #pb-toast {
+      position: fixed; bottom: 20px; right: 20px;
+      padding: 7px 14px; border-radius: var(--r-sm);
+      font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      font-size: 12px; font-weight: 700;
+      z-index: 9999;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+    }
+    #pb-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Empty states ── */
+    .pb-empty {
+      padding: 20px 12px;
+      color: var(--text-muted); font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header id="topbar">
+    <a class="icon-btn" href="index.html" aria-label="Inicio" title="Inicio">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 10.5L10 3.5L17 10.5V17.5H13V13H7V17.5H3V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <div class="logo">
+      <div class="logo-icon">B</div>
+      <span class="logo-text">Borregos</span>
+    </div>
+    <nav class="main-nav">
+      <a class="nav-link" href="game.html">GAME</a>
+      <a class="nav-link active" href="playbook.html">PLAYBOOK</a>
+      <a class="nav-link" href="analysis.html">ANALYSIS</a>
+    </nav>
+  </header>
+
+  <!-- Tab bar -->
+  <div id="tab-bar">
+    <button class="pb-tab active" data-tab="own-off">OWN OFF</button>
+    <button class="pb-tab" data-tab="own-def">OWN DEF</button>
+    <button class="pb-tab" data-tab="opp-off">OPP OFF</button>
+    <button class="pb-tab" data-tab="opp-def">OPP DEF</button>
+    <button class="pb-tab" data-tab="st">ST</button>
+    <button class="pb-tab" data-tab="st-def">ST DEF</button>
+  </div>
+
+  <!-- Main panel — populated by JS -->
+  <div id="main-panel"></div>
+
+  <!-- Toast -->
+  <div id="pb-toast"></div>
+
+  <script>
+  // ── Utilities ─────────────────────────────────────────────────────────
+
+  function uid() {
+    return (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  let _toastTimer;
+  function showToast(msg, color) {
+    const el = document.getElementById('pb-toast');
+    el.textContent = msg;
+    el.style.background = color;
+    el.style.color = (color === '#f5c518' || color === '#00c896') ? '#000' : '#fff';
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ── Storage ───────────────────────────────────────────────────────────
+
+  const KEYS = {
+    'own-off': 'playsync_playbook_own_off',
+    'own-def': 'playsync_playbook_own_def',
+    'opp-off': 'playsync_playbook_opp_off',
+    'opp-def': 'playsync_playbook_opp_def',
+    'st':      'playsync_playbook_st',
+    'st-def':  'playsync_playbook_st_def',
+  };
+
+  function defaultsFor(tab) {
+    switch (tab) {
+      case 'own-off': return PLAYBOOK;
+      case 'own-def': return DEFENSE_DATA;
+      case 'opp-off': return OPPONENT_PLAYBOOK;
+      case 'opp-def': return OPP_DEFENSE_DATA;
+      case 'st':      return ST_PLAYBOOK;
+      case 'st-def':  return ST_DEFENSE_DATA;
+    }
+  }
+
+  // ── App state ─────────────────────────────────────────────────────────
+
+  const S = {
+    activeTab: 'own-off',
+    selForm:   { 'own-off': null, 'opp-off': null, 'st': null },
+    pb:        {},
+  };
+
+  function loadAll() {
+    ['own-off', 'own-def', 'opp-off', 'opp-def', 'st', 'st-def'].forEach(tab => {
+      try {
+        const raw = localStorage.getItem(TeamConfig.key(KEYS[tab]));
+        S.pb[tab] = raw ? JSON.parse(raw) : clone(defaultsFor(tab));
+      } catch {
+        S.pb[tab] = clone(defaultsFor(tab));
+      }
+    });
+    ['own-off', 'opp-off', 'st'].forEach(tab => {
+      const fmts = S.pb[tab]?.formations;
+      S.selForm[tab] = fmts?.length ? fmts[0].id : null;
+    });
+  }
+
+  function autosave(tab) {
+    localStorage.setItem(TeamConfig.key(KEYS[tab]), JSON.stringify(S.pb[tab]));
+    showToast('Saved ✓', '#00c896');
+  }
+
+  function doReset(tab) {
+    const labels = {
+      'own-off': 'OWN OFFENSE', 'own-def': 'OWN DEFENSE',
+      'opp-off': 'OPP OFFENSE', 'opp-def': 'OPP DEFENSE',
+      'st':     'SPECIAL TEAMS',
+      'st-def': 'ST DEFENSE',
+    };
+    if (!confirm(`Reset ${labels[tab]} to factory defaults?\nAll custom changes will be lost.`)) return;
+    localStorage.removeItem(TeamConfig.key(KEYS[tab]));
+    S.pb[tab] = clone(defaultsFor(tab));
+    if (tab === 'own-off' || tab === 'opp-off' || tab === 'st') {
+      const fmts = S.pb[tab]?.formations;
+      S.selForm[tab] = fmts?.length ? fmts[0].id : null;
+    }
+    renderPanel();
+    showToast('Reset to defaults', '#f5c518');
+  }
+
+  // ── Tabs + panel router ───────────────────────────────────────────────
+
+  function renderPanel() {
+    document.querySelectorAll('.pb-tab').forEach(btn =>
+      btn.classList.toggle('active', btn.dataset.tab === S.activeTab)
+    );
+    const tab = S.activeTab;
+    if (tab === 'own-off' || tab === 'opp-off' || tab === 'st') renderOffPanel(tab);
+    else renderDefPanel(tab);
+  }
+
+  // ── OFFENSE PANEL ─────────────────────────────────────────────────────
+
+  function renderOffPanel(tab) {
+    const panel  = document.getElementById('main-panel');
+    const pb     = S.pb[tab];
+    const selId  = S.selForm[tab];
+    const selName = selId ? (pb.formations.find(f => f.id === selId)?.name || 'Plays') : 'Plays';
+
+    panel.innerHTML = `
+      <div class="pb-col col-formations" id="col-formations">
+        <div class="pb-col-header">
+          <span class="pb-col-title">Formation</span>
+          <button class="pb-reset-btn" id="pb-reset-btn">↺ Reset</button>
+        </div>
+        <div class="pb-list" id="pb-form-list"></div>
+        <div class="pb-add-row">
+          <button class="pb-add-btn" id="pb-add-form-btn">+ Add Formation</button>
+        </div>
+      </div>
+      <div class="pb-col" id="col-plays">
+        <div class="pb-col-header">
+          <span class="pb-col-title" id="plays-col-title">${esc(selName)}</span>
+        </div>
+        <div class="pb-list" id="pb-play-list"></div>
+        ${selId ? `
+        <div class="pb-add-row">
+          <button class="pb-add-btn" id="pb-add-play-btn">+ Add Play</button>
+        </div>` : ''}
+      </div>
+    `;
+
+    renderFormationList(tab);
+    renderPlayList(tab);
+
+    document.getElementById('pb-reset-btn').addEventListener('click', () => doReset(tab));
+    document.getElementById('pb-add-form-btn').addEventListener('click', () => showAddFormation(tab));
+    document.getElementById('pb-add-play-btn')?.addEventListener('click', () => showAddPlay(tab, selId));
+  }
+
+  function renderFormationList(tab) {
+    const pb   = S.pb[tab];
+    const selId = S.selForm[tab];
+    const list  = document.getElementById('pb-form-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!pb.formations.length) {
+      list.innerHTML = '<div class="pb-empty">No formations</div>';
+      return;
+    }
+
+    pb.formations.forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'pb-item' + (f.id === selId ? ' selected' : '');
+      item.dataset.formId = f.id;
+      item.innerHTML = `
+        <span class="pb-item-name">${esc(f.name)}</span>
+        <div class="pb-item-actions">
+          <button class="pb-icon-btn" title="Rename">✎</button>
+          <button class="pb-icon-btn del" title="Delete">✕</button>
+        </div>
+      `;
+
+      item.addEventListener('click', e => {
+        if (e.target.closest('.pb-icon-btn')) return;
+        S.selForm[tab] = f.id;
+        renderOffPanel(tab);
+      });
+
+      const [editBtn, delBtn] = item.querySelectorAll('.pb-icon-btn');
+      editBtn.addEventListener('click', e => { e.stopPropagation(); startEditFormation(tab, f.id); });
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!confirm(`Delete "${f.name}"? All its plays will be removed.`)) return;
+        pb.formations = pb.formations.filter(x => x.id !== f.id);
+        delete pb.plays[f.id];
+        if (S.selForm[tab] === f.id) S.selForm[tab] = pb.formations[0]?.id || null;
+        autosave(tab);
+        renderOffPanel(tab);
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  function renderPlayList(tab) {
+    const pb    = S.pb[tab];
+    const selId = S.selForm[tab];
+    const list  = document.getElementById('pb-play-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!selId) {
+      list.innerHTML = '<div class="pb-empty">Select a formation</div>';
+      return;
+    }
+
+    const plays = pb.plays[selId] || [];
+    if (!plays.length) {
+      list.innerHTML = '<div class="pb-empty">No plays — add one below</div>';
+      return;
+    }
+
+    plays.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'pb-item';
+      item.dataset.playId = p.id;
+      item.innerHTML = `
+        <span class="pb-badge ${p.type}">${p.type === 'run' ? 'RUN' : 'PASS'}</span>
+        <span class="pb-item-name">${esc(p.name)}</span>
+        <div class="pb-item-actions">
+          <button class="pb-icon-btn" title="Edit">✎</button>
+          <button class="pb-icon-btn del" title="Delete">✕</button>
+        </div>
+      `;
+
+      const [editBtn, delBtn] = item.querySelectorAll('.pb-icon-btn');
+      editBtn.addEventListener('click', e => { e.stopPropagation(); startEditPlay(tab, selId, p.id); });
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!confirm(`Delete "${p.name}"?`)) return;
+        pb.plays[selId] = plays.filter(x => x.id !== p.id);
+        autosave(tab);
+        renderPlayList(tab);
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  // ── Inline editing: formation name ────────────────────────────────────
+
+  function startEditFormation(tab, formId) {
+    const pb   = S.pb[tab];
+    const f    = pb.formations.find(f => f.id === formId);
+    if (!f) return;
+    const item = document.querySelector(`#pb-form-list [data-form-id="${formId}"]`);
+    if (!item) return;
+
+    const nameEl    = item.querySelector('.pb-item-name');
+    const actionsEl = item.querySelector('.pb-item-actions');
+    actionsEl.style.opacity = '0';
+
+    const input = document.createElement('input');
+    input.className = 'pb-inline-input';
+    input.value = f.name;
+    nameEl.replaceWith(input);
+    input.focus(); input.select();
+
+    let done = false;
+    const commit = () => {
+      if (done) return; done = true;
+      const v = input.value.trim();
+      if (v && v !== f.name) { f.name = v; autosave(tab); }
+      renderOffPanel(tab);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') { done = true; renderOffPanel(tab); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  // ── Inline editing: play ──────────────────────────────────────────────
+
+  function startEditPlay(tab, formId, playId) {
+    const pb    = S.pb[tab];
+    const plays = pb.plays[formId] || [];
+    const p     = plays.find(p => p.id === playId);
+    if (!p) return;
+    const item  = document.querySelector(`#pb-play-list [data-play-id="${playId}"]`);
+    if (!item) return;
+
+    let editType = p.type;
+    const badgeEl   = item.querySelector('.pb-badge');
+    const nameEl    = item.querySelector('.pb-item-name');
+    const actionsEl = item.querySelector('.pb-item-actions');
+    actionsEl.style.opacity = '0';
+
+    // Replace badge with type toggle
+    const toggle = document.createElement('div');
+    toggle.className = 'pb-type-toggle';
+    toggle.innerHTML = `
+      <button class="pb-type-btn run${editType === 'run' ? ' active' : ''}"  type="button">RUN</button>
+      <button class="pb-type-btn pass${editType === 'pass' ? ' active' : ''}" type="button">PASS</button>
+    `;
+    toggle.querySelectorAll('.pb-type-btn').forEach(btn => {
+      btn.addEventListener('mousedown', e => {
+        e.preventDefault(); // prevents blur on the name input
+        editType = btn.classList.contains('run') ? 'run' : 'pass';
+        toggle.querySelectorAll('.pb-type-btn').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+    badgeEl.replaceWith(toggle);
+
+    // Replace name with input
+    const input = document.createElement('input');
+    input.className = 'pb-inline-input';
+    input.value = p.name;
+    nameEl.replaceWith(input);
+    input.focus(); input.select();
+
+    let done = false;
+    const commit = () => {
+      if (done) return; done = true;
+      const v = input.value.trim();
+      if (v) { p.name = v; p.type = editType; autosave(tab); }
+      renderPlayList(tab);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') { done = true; renderPlayList(tab); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  // ── Add formation inline ──────────────────────────────────────────────
+
+  function showAddFormation(tab) {
+    const list = document.getElementById('pb-form-list');
+    if (!list) return;
+    list.querySelector('.pb-add-form')?.remove();
+
+    const form = document.createElement('div');
+    form.className = 'pb-add-form';
+    form.innerHTML = `
+      <input class="pb-inline-input" placeholder="Formation name..." style="flex:1" />
+      <button class="pb-icon-btn always-show" style="color:#00c896" title="Add">✓</button>
+      <button class="pb-icon-btn always-show" title="Cancel">✕</button>
+    `;
+    list.appendChild(form);
+    list.scrollTop = list.scrollHeight;
+
+    const input   = form.querySelector('input');
+    const [ok, cancel] = form.querySelectorAll('.pb-icon-btn');
+    input.focus();
+
+    const commit = () => {
+      const v = input.value.trim();
+      if (v) {
+        const pb = S.pb[tab];
+        const id = uid();
+        pb.formations.push({ id, name: v, group: v[0].toUpperCase() });
+        if (!pb.plays[id]) pb.plays[id] = [];
+        S.selForm[tab] = id;
+        autosave(tab);
+      }
+      renderOffPanel(tab);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') form.remove();
+    });
+    ok.addEventListener('click', commit);
+    cancel.addEventListener('click', () => form.remove());
+  }
+
+  // ── Add play inline ───────────────────────────────────────────────────
+
+  function showAddPlay(tab, formId) {
+    if (!formId) return;
+    const list = document.getElementById('pb-play-list');
+    if (!list) return;
+    list.querySelector('.pb-add-form')?.remove();
+
+    let addType = 'pass';
+    const form = document.createElement('div');
+    form.className = 'pb-add-form';
+    form.innerHTML = `
+      <div class="pb-type-toggle">
+        <button class="pb-type-btn run"         type="button">RUN</button>
+        <button class="pb-type-btn pass active"  type="button">PASS</button>
+      </div>
+      <input class="pb-inline-input" placeholder="Play name..." style="flex:1" />
+      <button class="pb-icon-btn always-show" style="color:#00c896" title="Add">✓</button>
+      <button class="pb-icon-btn always-show" title="Cancel">✕</button>
+    `;
+    list.appendChild(form);
+    list.scrollTop = list.scrollHeight;
+
+    form.querySelectorAll('.pb-type-btn').forEach(btn => {
+      btn.addEventListener('mousedown', e => {
+        e.preventDefault();
+        addType = btn.classList.contains('run') ? 'run' : 'pass';
+        form.querySelectorAll('.pb-type-btn').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    const input = form.querySelector('input');
+    const [ok, cancel] = form.querySelectorAll('.pb-icon-btn');
+    input.focus();
+
+    const commit = () => {
+      const v = input.value.trim();
+      if (v) {
+        const pb = S.pb[tab];
+        if (!pb.plays[formId]) pb.plays[formId] = [];
+        pb.plays[formId].push({ id: uid(), name: v, type: addType });
+        autosave(tab);
+      }
+      renderPlayList(tab);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') form.remove();
+    });
+    ok.addEventListener('click', commit);
+    cancel.addEventListener('click', () => form.remove());
+  }
+
+  // ── DEFENSE PANEL ─────────────────────────────────────────────────────
+
+  function renderDefPanel(tab) {
+    const panel = document.getElementById('main-panel');
+    panel.innerHTML = `
+      <div class="pb-col" id="col-fronts">
+        <div class="pb-col-header">
+          <span class="pb-col-title">Fronts</span>
+          <button class="pb-reset-btn" id="pb-reset-btn">↺ Reset</button>
+        </div>
+        <div class="pb-list" id="pb-fronts-list"></div>
+        <div class="pb-add-row">
+          <button class="pb-add-btn pb-add-def" data-list="fronts">+ Add Front</button>
+        </div>
+      </div>
+      <div class="pb-col" id="col-blitzes">
+        <div class="pb-col-header">
+          <span class="pb-col-title">Blitzes</span>
+        </div>
+        <div class="pb-list" id="pb-blitzes-list"></div>
+        <div class="pb-add-row">
+          <button class="pb-add-btn pb-add-def" data-list="blitzes">+ Add Blitz</button>
+        </div>
+      </div>
+      <div class="pb-col" id="col-coverages">
+        <div class="pb-col-header">
+          <span class="pb-col-title">Coverages</span>
+        </div>
+        <div class="pb-list" id="pb-coverages-list"></div>
+        <div class="pb-add-row">
+          <button class="pb-add-btn pb-add-def" data-list="coverages">+ Add Coverage</button>
+        </div>
+      </div>
+    `;
+
+    renderDefList(tab, 'fronts');
+    renderDefList(tab, 'blitzes');
+    renderDefList(tab, 'coverages');
+
+    document.getElementById('pb-reset-btn').addEventListener('click', () => doReset(tab));
+    panel.querySelectorAll('.pb-add-def').forEach(btn =>
+      btn.addEventListener('click', () => showAddDefItem(tab, btn.dataset.list))
+    );
+  }
+
+  function renderDefList(tab, listKey) {
+    const items = S.pb[tab][listKey] || [];
+    const el    = document.getElementById(`pb-${listKey}-list`);
+    if (!el) return;
+    el.innerHTML = '';
+
+    if (!items.length) {
+      el.innerHTML = '<div class="pb-empty">No items</div>';
+      return;
+    }
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'pb-item';
+      row.dataset.defId = item.id;
+      row.innerHTML = `
+        <span class="pb-item-name">${esc(item.name)}</span>
+        <div class="pb-item-actions">
+          <button class="pb-icon-btn" title="Edit">✎</button>
+          <button class="pb-icon-btn del" title="Delete">✕</button>
+        </div>
+      `;
+
+      const [editBtn, delBtn] = row.querySelectorAll('.pb-icon-btn');
+      editBtn.addEventListener('click', e => { e.stopPropagation(); startEditDefItem(tab, listKey, item.id); });
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!confirm(`Delete "${item.name}"?`)) return;
+        S.pb[tab][listKey] = items.filter(x => x.id !== item.id);
+        autosave(tab);
+        renderDefList(tab, listKey);
+      });
+
+      el.appendChild(row);
+    });
+  }
+
+  function startEditDefItem(tab, listKey, itemId) {
+    const items = S.pb[tab][listKey] || [];
+    const item  = items.find(i => i.id === itemId);
+    if (!item) return;
+    const row = document.querySelector(`#pb-${listKey}-list [data-def-id="${itemId}"]`);
+    if (!row) return;
+
+    const nameEl    = row.querySelector('.pb-item-name');
+    const actionsEl = row.querySelector('.pb-item-actions');
+    actionsEl.style.opacity = '0';
+
+    const input = document.createElement('input');
+    input.className = 'pb-inline-input';
+    input.value = item.name;
+    nameEl.replaceWith(input);
+    input.focus(); input.select();
+
+    let done = false;
+    const commit = () => {
+      if (done) return; done = true;
+      const v = input.value.trim();
+      if (v && v !== item.name) { item.name = v; autosave(tab); }
+      renderDefList(tab, listKey);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') { done = true; renderDefList(tab, listKey); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  function showAddDefItem(tab, listKey) {
+    const listEl = document.getElementById(`pb-${listKey}-list`);
+    if (!listEl) return;
+    listEl.querySelector('.pb-add-form')?.remove();
+
+    const form = document.createElement('div');
+    form.className = 'pb-add-form';
+    form.innerHTML = `
+      <input class="pb-inline-input" placeholder="Name..." style="flex:1" />
+      <button class="pb-icon-btn always-show" style="color:#00c896" title="Add">✓</button>
+      <button class="pb-icon-btn always-show" title="Cancel">✕</button>
+    `;
+    listEl.appendChild(form);
+    listEl.scrollTop = listEl.scrollHeight;
+
+    const input = form.querySelector('input');
+    const [ok, cancel] = form.querySelectorAll('.pb-icon-btn');
+    input.focus();
+
+    const commit = () => {
+      const v = input.value.trim();
+      if (v) {
+        if (!S.pb[tab][listKey]) S.pb[tab][listKey] = [];
+        S.pb[tab][listKey].push({ id: uid(), name: v });
+        autosave(tab);
+      }
+      renderDefList(tab, listKey);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') form.remove();
+    });
+    ok.addEventListener('click', commit);
+    cancel.addEventListener('click', () => form.remove());
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!TeamConfig.requireTeam()) return;
+    TeamConfig.apply();
+    loadAll();
+
+    document.querySelectorAll('.pb-tab').forEach(btn =>
+      btn.addEventListener('click', () => { S.activeTab = btn.dataset.tab; renderPanel(); })
+    );
+
+    renderPanel();
+  });
+  </script>
+</body>
+</html>

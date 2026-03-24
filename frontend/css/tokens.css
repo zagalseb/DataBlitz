@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════
+   DESIGN TOKENS
+   Edit these to retheme the entire app
+══════════════════════════════════════════ */
+
+:root {
+  /* ── Colors ── */
+  --bg:           #0f1923;
+  --bg-mid:       #141f2e;
+  --bg-panel:     #1a2535;
+  --bg-card:      #1e2d3d;
+  --bg-item:      #243447;
+  --bg-item-hover:#2a3d54;
+  --bg-selected:  #1a3650;
+
+  --border:       #243040;
+  --border-light: #2d3f55;
+
+  --text-primary: #ffffff;
+  --text-secondary: #8ba3be;
+  --text-muted:   #4a6278;
+
+  --accent-blue:  #2196f3;
+  --accent-blue-bright: #42a5f5;
+  --accent-orange: #ff6b00;
+  --accent-orange-muted: rgba(255, 107, 0, 0.15);
+
+  --run-color:    #e53935;
+  --run-bg:       rgba(229, 57, 53, 0.18);
+  --pass-color:   #2196f3;
+  --pass-bg:      rgba(33, 150, 243, 0.18);
+
+  --endzone-home: rgba(180, 40, 40, 0.85);
+  --endzone-away: rgba(30, 80, 160, 0.85);
+  --field-green:  #2d5a27;
+  --field-line:   rgba(255,255,255,0.25);
+
+  /* ── Typography ── */
+  --font-ui:      -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-mono:    'SF Mono', 'Menlo', monospace;
+
+  /* ── Sizing — iPad landscape target: 1024×768 ── */
+  --topbar-h:     56px;
+  --middle-h:     200px;
+  --playbar-h:    44px;
+  --bottom-h:     calc(100vh - var(--topbar-h) - var(--middle-h) - var(--playbar-h));
+
+  /* ── Radius ── */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-full: 999px;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
+  --shadow-btn: 0 2px 8px rgba(33,150,243,0.35);
+}

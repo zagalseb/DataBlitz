@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Opp Tracker — DataBlitz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════
+       RESET
+    ══════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    button   { cursor: pointer; border: none; background: none; font: inherit; }
+    input    { font: inherit; }
+
+    /* ══════════════════════════════════
+       TOKENS
+    ══════════════════════════════════ */
+    :root {
+      --bg:          #0a0c0f;
+      --bg-card:     #131820;
+      --bg-item:     #1a2230;
+      --bg-item-hov: #1f2a3d;
+      --bg-sel:      #1e2d40;
+      --border:      #1f2d3d;
+      --border-lt:   #253545;
+      --text:        #e8eef4;
+      --text-2:      #7a93aa;
+      --text-3:      #3d5268;
+      --accent:      #e85d30;
+      --accent-m:    rgba(232,93,48,0.14);
+      --accent-b:    rgba(232,93,48,0.35);
+      --green:       #00c896;
+      --green-m:     rgba(0,200,150,0.13);
+      --red:         #ef4444;
+      --red-m:       rgba(239,68,68,0.13);
+      --yellow:      #f59e0b;
+      --yellow-m:    rgba(245,158,11,0.13);
+      --blue:        #3b82f6;
+      --topbar-h:    56px;
+      --tabnav-h:    44px;
+      --banner-h:    34px;
+      --r-sm:        6px;
+      --r-md:        10px;
+      --r-lg:        14px;
+      --r-full:      999px;
+    }
+
+    /* ══════════════════════════════════
+       BASE
+    ══════════════════════════════════ */
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════
+       TOPBAR
+    ══════════════════════════════════ */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--topbar-h);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      gap: 10px;
+      z-index: 200;
+    }
+    .topbar-left  { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .topbar-center{ display: flex; align-items: center; gap: 12px; flex: 1; justify-content: center; overflow: hidden; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    /* Logo */
+    .logo { display: flex; align-items: center; gap: 7px; }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: #004992;
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px; font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+
+    /* Back button */
+    .btn-back {
+      display: flex; align-items: center; gap: 5px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+      padding: 0 10px;
+      height: 34px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border-lt);
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-back:hover { background: var(--bg-item); color: var(--text); }
+
+    /* Rival name */
+    #rival-name-display {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: var(--r-sm);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      transition: border-color 0.15s;
+    }
+    #rival-name-display:hover { border-color: var(--border-lt); }
+    #rival-name-input {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--bg-item);
+      border: 1px solid var(--accent-b);
+      border-radius: var(--r-sm);
+      padding: 2px 8px;
+      width: 130px;
+      display: none;
+    }
+
+    /* Quarter selector */
+    .quarter-selector {
+      display: flex;
+      gap: 3px;
+      background: var(--bg-item);
+      border-radius: var(--r-md);
+      padding: 3px;
+    }
+    .quarter-btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+      padding: 0 10px;
+      height: 28px;
+      border-radius: var(--r-sm);
+      transition: background 0.15s, color 0.15s;
+    }
+    .quarter-btn.active { background: var(--accent); color: #fff; }
+
+    /* Play counter */
+    #play-counter {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700;
+      color: var(--text-2);
+      background: var(--bg-item);
+      padding: 0 12px;
+      height: 30px;
+      border-radius: var(--r-full);
+      display: flex; align-items: center;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    #play-counter span { color: var(--accent); margin-right: 4px; }
+
+    /* ══════════════════════════════════
+       NO-GAME BANNER
+    ══════════════════════════════════ */
+    #no-game-banner {
+      position: fixed;
+      top: var(--topbar-h); left: 0; right: 0;
+      height: var(--banner-h);
+      background: var(--yellow-m);
+      border-bottom: 1px solid rgba(245,158,11,0.25);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px; font-weight: 600;
+      color: var(--yellow);
+      z-index: 150;
+    }
+    #no-game-banner.show { display: flex; }
+
+    /* ══════════════════════════════════
+       TAB NAV
+    ══════════════════════════════════ */
+    #tab-nav {
+      position: fixed;
+      top: var(--topbar-h); left: 0; right: 0;
+      height: var(--tabnav-h);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      transition: top 0.15s;
+    }
+    #tab-nav.with-banner { top: calc(var(--topbar-h) + var(--banner-h)); }
+    .tab-btn {
+      flex: 1;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.09em;
+      color: var(--text-3);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ══════════════════════════════════
+       TAB CONTENT
+    ══════════════════════════════════ */
+    #tab-content {
+      position: fixed;
+      top: calc(var(--topbar-h) + var(--tabnav-h));
+      left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      transition: top 0.15s;
+    }
+    #tab-content.with-banner {
+      top: calc(var(--topbar-h) + var(--tabnav-h) + var(--banner-h));
+    }
+    .tab-pane          { display: none; padding: 14px 16px 24px; }
+    .tab-pane.active   { display: block; }
+
+    /* ══════════════════════════════════
+       CAPTURE TAB — GRID
+    ══════════════════════════════════ */
+    .capture-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .chip-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 10px 12px 12px;
+    }
+    .chip-group.span2 { grid-column: 1 / -1; }
+
+    .chip-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.13em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .sticky-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .chip {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: var(--text-2);
+      background: var(--bg-item);
+      border: 1px solid var(--border-lt);
+      border-radius: var(--r-sm);
+      padding: 0 13px;
+      height: 38px;
+      min-width: 46px;
+      letter-spacing: 0.02em;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+    .chip:hover  { background: var(--bg-item-hov); color: var(--text); }
+    .chip.active {
+      background: var(--accent-m);
+      color: var(--accent);
+      border-color: var(--accent-b);
+    }
+
+    /* Result chip color variants */
+    .chip.active.res-stop     { background: var(--green-m); color: var(--green); border-color: rgba(0,200,150,0.35); }
+    .chip.active.res-firstdown,
+    .chip.active.res-td       { background: var(--red-m);   color: var(--red);   border-color: rgba(239,68,68,0.35); }
+    .chip.active.res-turnover { background: var(--yellow-m);color: var(--yellow);border-color: rgba(245,158,11,0.35); }
+
+    /* Yards control */
+    .yards-control { display: flex; align-items: center; gap: 10px; }
+    .yards-btn {
+      width: 38px; height: 38px;
+      background: var(--bg-item);
+      border: 1px solid var(--border-lt);
+      border-radius: var(--r-sm);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700;
+      color: var(--text-2);
+      transition: background 0.12s, color 0.12s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .yards-btn:hover { background: var(--bg-item-hov); color: var(--text); }
+    .yards-btn:active { transform: scale(0.93); }
+    #yards-display {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px; font-weight: 900;
+      color: var(--text);
+      min-width: 54px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    #yards-display.pos { color: var(--green); }
+    #yards-display.neg { color: var(--red); }
+
+    /* Register button */
+    .register-wrap { grid-column: 1 / -1; margin-top: 2px; }
+    #btn-register {
+      width: 100%;
+      height: 52px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px; font-weight: 900;
+      letter-spacing: 0.1em;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #btn-register:active { opacity: 0.88; transform: scale(0.98); }
+
+    @keyframes flash-success {
+      0%   { background: var(--accent); }
+      40%  { background: var(--green); }
+      100% { background: var(--accent); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-7px); }
+      60%      { transform: translateX(7px); }
+    }
+    #btn-register.flash { animation: flash-success 0.45s ease; }
+    #btn-register.error { animation: shake 0.35s ease; }
+
+    .validation-msg {
+      font-size: 11px; font-weight: 600;
+      color: var(--red);
+      text-align: center;
+      margin-top: 7px;
+      min-height: 16px;
+    }
+
+    /* ══════════════════════════════════
+       TRENDS TAB
+    ══════════════════════════════════ */
+    .trends-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+    }
+    .stat-card.span2 { grid-column: 1 / -1; }
+    .stat-card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.13em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* Run/pass bar */
+    .rp-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .rp-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700;
+    }
+    .rp-label.run  { color: var(--accent); }
+    .rp-label.pass { color: var(--blue); }
+    .rp-bar-track {
+      height: 9px;
+      background: var(--bg-item);
+      border-radius: var(--r-full);
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 14px;
+    }
+    .rp-bar-run  { background: var(--accent); height: 100%; transition: width 0.4s ease; }
+    .rp-bar-pass { background: var(--blue);   height: 100%; transition: width 0.4s ease; }
+
+    /* Down table */
+    .down-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .down-table th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+      text-align: left;
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .down-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(31,45,61,0.4);
+    }
+    .down-table tr:last-child td  { border-bottom: none; }
+    .down-table tr.hl-row td      { background: var(--accent-m); }
+    .td-dn   { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--text-2); }
+    .td-run  { color: var(--accent); font-weight: 700; font-family: 'Barlow Condensed', sans-serif; }
+    .td-pass { color: var(--blue);   font-weight: 700; font-family: 'Barlow Condensed', sans-serif; }
+    .td-n    { color: var(--text-3); font-family: 'Barlow Condensed', sans-serif; }
+
+    /* Formation/Personnel bars */
+    .freq-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+    .freq-row:last-child { margin-bottom: 0; }
+    .freq-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-2);
+      width: 100px; flex-shrink: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .freq-name.top { color: var(--accent); }
+    .freq-bar-track {
+      flex: 1;
+      height: 18px;
+      background: var(--bg-item);
+      border-radius: var(--r-sm);
+      overflow: hidden;
+    }
+    .freq-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      opacity: 0.55;
+      border-radius: var(--r-sm);
+      transition: width 0.4s ease;
+    }
+    .freq-bar-fill.top { opacity: 1; }
+    .freq-pct   { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-2); width: 34px; text-align: right; }
+    .freq-count { font-size: 11px; color: var(--text-3); width: 22px; }
+
+    /* Critical situations */
+    .crit-section {
+      background: var(--bg-item);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .crit-section:last-child { margin-bottom: 0; }
+    .crit-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 900;
+      letter-spacing: 0.11em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .crit-body {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.85;
+    }
+    .crit-val       { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--text); }
+    .crit-val.run   { color: var(--accent); }
+    .crit-val.pass  { color: var(--blue); }
+    .crit-val.green { color: var(--green); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-3);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    /* ══════════════════════════════════
+       LOG TAB
+    ══════════════════════════════════ */
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      max-width: 860px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .log-title-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700;
+      color: var(--text-2);
+    }
+    .log-actions { display: flex; gap: 8px; }
+    .btn-undo, .btn-reset {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0 12px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-undo  { color: var(--text-2); border: 1px solid var(--border-lt); }
+    .btn-undo:hover  { background: var(--bg-item); color: var(--text); }
+    .btn-reset { color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+    .btn-reset:hover { background: var(--red-m); }
+
+    .play-log {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .play-entry {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border-lt);
+      border-radius: var(--r-sm);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .play-entry.pe-stop     { border-left-color: var(--green); }
+    .play-entry.pe-firstdown,
+    .play-entry.pe-td       { border-left-color: var(--red); }
+    .play-entry.pe-turnover { border-left-color: var(--yellow); }
+
+    .pe-q   { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; color: var(--accent); width: 22px; flex-shrink: 0; }
+    .pe-sit { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-2); width: 58px; flex-shrink: 0; }
+    .pe-det { flex: 1; color: var(--text-2); }
+    .pe-det strong { color: var(--text); font-weight: 600; }
+    .pe-yds { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; width: 38px; text-align: right; flex-shrink: 0; }
+    .pe-yds.pos  { color: var(--green); }
+    .pe-yds.neg  { color: var(--red); }
+    .pe-yds.zero { color: var(--text-3); }
+    .pe-res { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; width: 58px; text-align: right; flex-shrink: 0; }
+    .pe-res.stop     { color: var(--green); }
+    .pe-res.turnover { color: var(--yellow); }
+    .pe-res.td,
+    .pe-res.firstdown { color: var(--red); }
+
+    /* ══════════════════════════════════
+       PRINTOUT TAB
+    ══════════════════════════════════ */
+    .printout-controls {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+      max-width: 680px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-print {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+      background: var(--accent);
+      padding: 0 18px;
+      height: 36px;
+      border-radius: var(--r-sm);
+      transition: opacity 0.15s;
+    }
+    .btn-print:hover { opacity: 0.88; }
+
+    #printout-block {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #fff;
+      color: #0d0d0d;
+      padding: 22px 26px;
+      border-radius: var(--r-md);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .po-header  { font-size: 13px; font-weight: bold; letter-spacing: 0.04em; }
+    .po-hr      { border: none; border-top: 1px solid #333; margin: 6px 0; }
+    .po-section { font-weight: bold; font-size: 11px; letter-spacing: 0.1em; margin: 10px 0 3px; }
+    .po-hl      { background: #fff3cd; padding: 1px 4px; border-radius: 2px; }
+    .po-empty   { color: #888; text-align: center; padding: 20px 0; }
+
+    /* ══════════════════════════════════
+       PRINT MEDIA
+    ══════════════════════════════════ */
+    @media print {
+      * { visibility: hidden !important; }
+      #printout-block,
+      #printout-block * { visibility: visible !important; }
+      #printout-block {
+        position: fixed !important;
+        top: 0 !important; left: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 14px 18px !important;
+        font-size: 11px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       TOPBAR
+  ══════════════════════════════════════════ -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <button class="btn-back" onclick="location.href='index.html'">&#8592; BACK</button>
+      <div class="logo">
+        <div class="logo-icon">B</div>
+        <span class="logo-text">Borregos</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <span id="rival-name-display" onclick="editRivalName()">RIVAL</span>
+      <input id="rival-name-input" type="text" maxlength="15"
+             onblur="saveRivalName()"
+             onkeydown="if(event.key==='Enter')this.blur()" />
+      <div class="quarter-selector" id="quarter-selector"></div>
+    </div>
+
+    <div class="topbar-right">
+      <div id="play-counter"><span id="play-count">0</span>&nbsp;plays</div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       NO GAME BANNER
+  ══════════════════════════════════════════ -->
+  <div id="no-game-banner">
+    Sin partido activo — escribe el nombre del rival manualmente arriba
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB NAV
+  ══════════════════════════════════════════ -->
+  <nav id="tab-nav">
+    <button class="tab-btn active" data-tab="capture">CAPTURA</button>
+    <button class="tab-btn" data-tab="trends">TENDENCIAS</button>
+    <button class="tab-btn" data-tab="log">LOG</button>
+    <button class="tab-btn" data-tab="printout">PRINTOUT</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       TAB CONTENT
+  ══════════════════════════════════════════ -->
+  <div id="tab-content">
+
+    <!-- ── CAPTURA ── -->
+    <div id="tab-capture" class="tab-pane active">
+      <div class="capture-grid">
+
+        <!-- Down -->
+        <div class="chip-group">
+          <div class="chip-label">DOWN</div>
+          <div class="chips" id="chips-down"></div>
+        </div>
+
+        <!-- Distance -->
+        <div class="chip-group">
+          <div class="chip-label">DISTANCE</div>
+          <div class="chips" id="chips-distance"></div>
+        </div>
+
+        <!-- Formation (sticky) -->
+        <div class="chip-group span2">
+          <div class="chip-label">FORMATION <span class="sticky-dot" title="Se mantiene entre jugadas"></span></div>
+          <div class="chips" id="chips-formation"></div>
+        </div>
+
+        <!-- Personnel (sticky) -->
+        <div class="chip-group">
+          <div class="chip-label">PERSONNEL <span class="sticky-dot" title="Se mantiene entre jugadas"></span></div>
+          <div class="chips" id="chips-personnel"></div>
+        </div>
+
+        <!-- Play Type -->
+        <div class="chip-group">
+          <div class="chip-label">PLAY TYPE</div>
+          <div class="chips" id="chips-playType"></div>
+        </div>
+
+        <!-- Direction -->
+        <div class="chip-group">
+          <div class="chip-label">DIRECTION</div>
+          <div class="chips" id="chips-direction"></div>
+        </div>
+
+        <!-- Yards -->
+        <div class="chip-group">
+          <div class="chip-label">YARDS GAINED</div>
+          <div class="yards-control">
+            <button class="yards-btn" id="btn-yards-minus">&#8722;</button>
+            <div id="yards-display">0</div>
+            <button class="yards-btn" id="btn-yards-plus">+</button>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="chip-group span2">
+          <div class="chip-label">RESULT</div>
+          <div class="chips" id="chips-result"></div>
+        </div>
+
+        <!-- Register -->
+        <div class="register-wrap">
+          <button id="btn-register">&#9679; REGISTRAR JUGADA</button>
+          <div class="validation-msg" id="validation-msg"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── TENDENCIAS ── -->
+    <div id="tab-trends" class="tab-pane">
+      <div class="trends-grid" id="trends-content">
+        <div class="empty-state span2">No hay jugadas registradas</div>
+      </div>
+    </div>
+
+    <!-- ── LOG ── -->
+    <div id="tab-log" class="tab-pane">
+      <div class="log-header">
+        <div class="log-title-text" id="log-title">0 jugadas</div>
+        <div class="log-actions">
+          <button class="btn-undo" id="btn-undo">&#10005; UNDO</button>
+          <button class="btn-reset" id="btn-reset">RESET</button>
+        </div>
+      </div>
+      <div class="play-log" id="play-log">
+        <div class="empty-state">Sin jugadas registradas</div>
+      </div>
+    </div>
+
+    <!-- ── PRINTOUT ── -->
+    <div id="tab-printout" class="tab-pane">
+      <div class="printout-controls">
+        <button class="btn-print" onclick="window.print()">&#128438; IMPRIMIR</button>
+      </div>
+      <div id="printout-block">
+        <div class="po-empty">Registra jugadas para generar el printout</div>
+      </div>
+    </div>
+
+  </div><!-- #tab-content -->
+
+  <script src="opponent-data.js"></script>
+  <script>
+  // ═══════════════════════════════════════════════════════
+  // STATE
+  // ═══════════════════════════════════════════════════════
+  const PLAYS_KEY  = 'playsync_opponent_plays';
+  const GAMES_KEY  = 'playsync_games';
+  const ID_KEY     = 'playsync_current_game_id';
+  const RIVAL_KEY  = 'playsync_opponent_rival';
+
+  let plays     = [];
+  let gameId    = null;
+  let rivalName = 'RIVAL';
+  let activeQ   = 'Q1';
+  let yards     = 0;
+  let vtTimer   = null;
+
+  // Selection state
+  const sel = {
+    down: null, distance: null, formation: null,
+    personnel: null, playType: null, direction: null, result: null
+  };
+  // Sticky (formation, personnel survive play reset)
+  const sticky = { formation: null, personnel: null };
+
+  // ═══════════════════════════════════════════════════════
+  // PERSISTENCE
+  // ═══════════════════════════════════════════════════════
+  function loadPlays() {
+    const all = JSON.parse(localStorage.getItem(PLAYS_KEY) || '[]');
+    plays = gameId ? all.filter(p => String(p.gameId) === String(gameId)) : all;
+  }
+
+  function savePlays() {
+    const all   = JSON.parse(localStorage.getItem(PLAYS_KEY) || '[]');
+    const other = gameId ? all.filter(p => String(p.gameId) !== String(gameId)) : [];
+    localStorage.setItem(PLAYS_KEY, JSON.stringify([...other, ...plays]));
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // GAME CONTEXT
+  // ═══════════════════════════════════════════════════════
+  function loadGameContext() {
+    gameId = localStorage.getItem(ID_KEY);
+    if (gameId) {
+      const games = JSON.parse(localStorage.getItem(GAMES_KEY) || '[]');
+      const game  = games.find(g => String(g.id) === String(gameId));
+      if (game) {
+        rivalName = game.teamAway || 'RIVAL';
+        const qMap = { 1:'Q1', 2:'Q2', 3:'Q3', 4:'Q4' };
+        activeQ = qMap[game.quarter] || 'Q1';
+      }
+    } else {
+      const saved = localStorage.getItem(RIVAL_KEY);
+      if (saved) rivalName = saved;
+      document.getElementById('no-game-banner').classList.add('show');
+      document.getElementById('tab-nav').classList.add('with-banner');
+      document.getElementById('tab-content').classList.add('with-banner');
+    }
+  }
+
+  // Poll quarter from PlaySync every 5 s
+  setInterval(() => {
+    if (!gameId) return;
+    const games = JSON.parse(localStorage.getItem(GAMES_KEY) || '[]');
+    const game  = games.find(g => String(g.id) === String(gameId));
+    if (!game) return;
+    const qMap = { 1:'Q1', 2:'Q2', 3:'Q3', 4:'Q4' };
+    const q = qMap[game.quarter] || 'Q1';
+    if (q !== activeQ) {
+      activeQ = q;
+      setQ(activeQ);
+    }
+  }, 5000);
+
+  // ═══════════════════════════════════════════════════════
+  // RIVAL NAME EDITING
+  // ═══════════════════════════════════════════════════════
+  function editRivalName() {
+    const disp  = document.getElementById('rival-name-display');
+    const input = document.getElementById('rival-name-input');
+    disp.style.display  = 'none';
+    input.style.display = 'block';
+    input.value = rivalName;
+    input.focus();
+    input.select();
+  }
+
+  function saveRivalName() {
+    const input = document.getElementById('rival-name-input');
+    const v = input.value.trim().toUpperCase();
+    rivalName = v || 'RIVAL';
+    localStorage.setItem(RIVAL_KEY, rivalName);
+    document.getElementById('rival-name-display').textContent = rivalName;
+    document.getElementById('rival-name-display').style.display = '';
+    input.style.display = 'none';
+    if (document.getElementById('tab-printout').classList.contains('active')) {
+      renderPrintout();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // QUARTER UI
+  // ═══════════════════════════════════════════════════════
+  function buildQuarterSelector() {
+    const el = document.getElementById('quarter-selector');
+    el.innerHTML = DEFENSE_OPPONENT_DATA.quarters.map(q =>
+      `<button class="quarter-btn${q===activeQ?' active':''}" data-q="${q}">${q}</button>`
+    ).join('');
+    el.addEventListener('click', e => {
+      const btn = e.target.closest('.quarter-btn');
+      if (!btn) return;
+      activeQ = btn.dataset.q;
+      setQ(activeQ);
+    });
+  }
+
+  function setQ(q) {
+    activeQ = q;
+    document.querySelectorAll('.quarter-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.q === q)
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // CHIP BUILDER (from DEFENSE_OPPONENT_DATA)
+  // ═══════════════════════════════════════════════════════
+  function buildChips(containerId, field, items) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = items.map(item => {
+      const rc = item.colorClass ? ` ${item.colorClass}` : '';
+      return `<button class="chip${rc}" data-field="${field}" data-value="${item.value}">${item.label}</button>`;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // CHIP CLICK HANDLING (event delegation on body)
+  // ═══════════════════════════════════════════════════════
+  document.addEventListener('click', e => {
+    const chip = e.target.closest('[data-field]');
+    if (!chip) return;
+    const field = chip.dataset.field;
+    const value = chip.dataset.value;
+    const wasActive = chip.classList.contains('active');
+
+    // Deselect all in group
+    chip.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+
+    if (!wasActive) {
+      chip.classList.add('active');
+      sel[field] = value;
+      if (field === 'formation') sticky.formation = value;
+      if (field === 'personnel') sticky.personnel = value;
+    } else {
+      sel[field] = null;
+      if (field === 'formation') sticky.formation = null;
+      if (field === 'personnel') sticky.personnel = null;
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // YARDS CONTROL
+  // ═══════════════════════════════════════════════════════
+  function renderYards() {
+    const el = document.getElementById('yards-display');
+    el.textContent = yards;
+    el.className = yards > 0 ? 'pos' : yards < 0 ? 'neg' : '';
+  }
+  document.getElementById('btn-yards-minus').addEventListener('click', () => { yards--; renderYards(); });
+  document.getElementById('btn-yards-plus').addEventListener('click',  () => { yards++; renderYards(); });
+
+  // ═══════════════════════════════════════════════════════
+  // REGISTER PLAY
+  // ═══════════════════════════════════════════════════════
+  function showValidation(msg) {
+    const el = document.getElementById('validation-msg');
+    el.textContent = msg;
+    clearTimeout(vtTimer);
+    vtTimer = setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  document.getElementById('btn-register').addEventListener('click', () => {
+    // Require: down, playType, result
+    const missing = [];
+    if (!sel.down)     missing.push('Down');
+    if (!sel.playType) missing.push('Play Type');
+    if (!sel.result)   missing.push('Result');
+
+    const btn = document.getElementById('btn-register');
+
+    if (missing.length) {
+      btn.classList.add('error');
+      btn.addEventListener('animationend', () => btn.classList.remove('error'), { once: true });
+      showValidation('Falta: ' + missing.join(', '));
+      return;
+    }
+
+    const play = {
+      id:          String(Date.now()),
+      gameId:      gameId,
+      quarter:     activeQ,
+      down:        sel.down,
+      distance:    sel.distance,
+      formation:   sel.formation,
+      personnel:   sel.personnel,
+      playType:    sel.playType,
+      direction:   sel.direction,
+      yardsGained: yards,
+      result:      sel.result,
+      ts:          new Date().toISOString()
+    };
+
+    plays.push(play);
+    savePlays();
+
+    // Flash
+    btn.classList.add('flash');
+    btn.addEventListener('animationend', () => btn.classList.remove('flash'), { once: true });
+
+    // Reset non-sticky selection
+    sel.down = null; sel.distance = null;
+    sel.playType = null; sel.direction = null; sel.result = null;
+    yards = 0;
+
+    // Update chip UI — clear non-sticky chips
+    ['down', 'distance', 'playType', 'direction', 'result'].forEach(f => {
+      document.querySelectorAll(`[data-field="${f}"]`).forEach(c => c.classList.remove('active'));
+    });
+    renderYards();
+    document.getElementById('validation-msg').textContent = '';
+    updatePlayCount();
+    renderTrends();
+    renderLog();
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // UNDO / RESET
+  // ═══════════════════════════════════════════════════════
+  document.getElementById('btn-undo').addEventListener('click', () => {
+    if (!plays.length) return;
+    plays.pop();
+    savePlays();
+    updatePlayCount();
+    renderTrends();
+    renderLog();
+    if (document.getElementById('tab-printout').classList.contains('active')) renderPrintout();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (!confirm('¿Borrar todas las jugadas del rival en este partido?')) return;
+    plays = [];
+    savePlays();
+    updatePlayCount();
+    renderTrends();
+    renderLog();
+    if (document.getElementById('tab-printout').classList.contains('active')) renderPrintout();
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // PLAY COUNT
+  // ═══════════════════════════════════════════════════════
+  function updatePlayCount() {
+    document.getElementById('play-count').textContent = plays.length;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // ANALYTICS HELPERS
+  // ═══════════════════════════════════════════════════════
+  function pct(n, total) {
+    return total ? Math.round(n / total * 100) + '%' : '—';
+  }
+
+  function ords(n) {
+    return { '1':'st', '2':'nd', '3':'rd', '4':'th' }[String(n)] || 'th';
+  }
+
+  function runPassStats(arr) {
+    const n    = arr.length;
+    const runs = arr.filter(p => p.playType === 'Run').length;
+    const pass = arr.filter(p => p.playType === 'Pass' || p.playType === 'RPO').length;
+    return { n, runs, pass, runPct: pct(runs, n), passPct: pct(pass, n) };
+  }
+
+  function runPassByDown(arr, d) {
+    return runPassStats(arr.filter(p => p.down === String(d)));
+  }
+
+  function freqOf(arr, field) {
+    const counts = {};
+    arr.forEach(p => { if (p[field]) counts[p[field]] = (counts[p[field]] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }
+
+  function topOf(arr, field) {
+    const f = freqOf(arr, field);
+    return f.length ? f[0][0] : null;
+  }
+
+  // Estimate red-zone plays:
+  // Running field position, starting at 20 (own 20), resets on TD or Turnover.
+  // Red zone = position >= 80 (within 20 yards of end zone).
+  function redZonePlays(arr) {
+    let pos = 20;
+    const rz = [];
+    arr.forEach(p => {
+      if (pos >= 80) rz.push(p);
+      pos += (parseInt(p.yardsGained) || 0);
+      pos = Math.max(0, Math.min(100, pos));
+      if (p.result === 'TD' || p.result === 'Turnover') pos = 20;
+    });
+    return rz;
+  }
+
+  // 2-minute drill proxy: last 5 plays from Q2 + last 5 from Q4
+  function twoMinutePlays(arr) {
+    const q2 = arr.filter(p => p.quarter === 'Q2');
+    const q4 = arr.filter(p => p.quarter === 'Q4');
+    return [...q2.slice(-5), ...q4.slice(-5)];
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // RENDER TRENDS
+  // ═══════════════════════════════════════════════════════
+  function renderTrends() {
+    const el = document.getElementById('trends-content');
+    if (!plays.length) {
+      el.innerHTML = '<div class="empty-state span2">No hay jugadas registradas</div>';
+      return;
+    }
+
+    const total   = plays.length;
+    const overall = runPassStats(plays);
+    const runW    = overall.n ? Math.round(overall.runs / overall.n * 100) : 0;
+    const pasW    = 100 - runW;
+
+    const fFreq   = freqOf(plays, 'formation');
+    const pFreq   = freqOf(plays, 'personnel');
+
+    const td3     = plays.filter(p => p.down === '3');
+    const td3s    = runPassStats(td3);
+    const td3Sh   = td3.filter(p => p.distance === '1-3');
+    const td3Mi   = td3.filter(p => p.distance === '4-6');
+    const td3Lo   = td3.filter(p => p.distance === '7-10' || p.distance === '10+');
+
+    const rz      = redZonePlays(plays);
+    const rzS     = runPassStats(rz);
+    const tm      = twoMinutePlays(plays);
+
+    el.innerHTML = `
+      <!-- Run/Pass Card -->
+      <div class="stat-card span2">
+        <div class="stat-card-title">RUN vs PASS &mdash; ${total} jugada${total !== 1 ? 's' : ''}</div>
+        <div class="rp-labels">
+          <div class="rp-label run">&#x1F3C3; Run ${overall.runPct} (${overall.runs})</div>
+          <div class="rp-label pass">&#x1F3C8; Pass ${overall.passPct} (${overall.pass})</div>
+        </div>
+        <div class="rp-bar-track">
+          <div class="rp-bar-run"  style="width:${runW}%"></div>
+          <div class="rp-bar-pass" style="width:${pasW}%"></div>
+        </div>
+        <table class="down-table">
+          <thead><tr><th>DOWN</th><th>RUN%</th><th>PASS%</th><th>N</th></tr></thead>
+          <tbody>
+            ${[1,2,3,4].map(d => {
+              const s = runPassByDown(plays, d);
+              return `<tr class="${d===3?'hl-row':''}">
+                <td class="td-dn">${d}${ords(d)}</td>
+                <td class="td-run">${s.runPct}</td>
+                <td class="td-pass">${s.passPct}</td>
+                <td class="td-n">${s.n}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Formations -->
+      <div class="stat-card">
+        <div class="stat-card-title">FORMACIONES</div>
+        ${fFreq.length ? fFreq.map(([name, cnt], i) => `
+          <div class="freq-row">
+            <div class="freq-name${i===0?' top':''}">${name}</div>
+            <div class="freq-bar-track">
+              <div class="freq-bar-fill${i===0?' top':''}" style="width:${Math.round(cnt/total*100)}%"></div>
+            </div>
+            <div class="freq-pct">${Math.round(cnt/total*100)}%</div>
+            <div class="freq-count">${cnt}x</div>
+          </div>
+        `).join('') : '<div style="color:var(--text-3);font-size:12px">Sin datos de formación</div>'}
+      </div>
+
+      <!-- Personnel -->
+      <div class="stat-card">
+        <div class="stat-card-title">PERSONNEL</div>
+        ${pFreq.length ? pFreq.map(([name, cnt], i) => `
+          <div class="freq-row">
+            <div class="freq-name${i===0?' top':''}">${name} pers.</div>
+            <div class="freq-bar-track">
+              <div class="freq-bar-fill${i===0?' top':''}" style="width:${Math.round(cnt/total*100)}%"></div>
+            </div>
+            <div class="freq-pct">${Math.round(cnt/total*100)}%</div>
+            <div class="freq-count">${cnt}x</div>
+          </div>
+        `).join('') : '<div style="color:var(--text-3);font-size:12px">Sin datos de personnel</div>'}
+      </div>
+
+      <!-- Critical Situations -->
+      <div class="stat-card span2">
+        <div class="stat-card-title">SITUACIONES CR&Iacute;TICAS</div>
+
+        <div class="crit-section">
+          <div class="crit-title">3RD DOWN &mdash; ${td3.length} jugadas</div>
+          <div class="crit-body">
+            Tendencia:
+            <span class="crit-val run">Run ${td3s.runPct}</span> /
+            <span class="crit-val pass">Pass ${td3s.passPct}</span>
+            ${topOf(td3,'formation') ? `&nbsp;&nbsp;|&nbsp;&nbsp; Formaci&oacute;n m&aacute;s com&uacute;n: <span class="crit-val">${topOf(td3,'formation')}</span>` : ''}
+            <br>
+            Short 1-3:&nbsp;<span class="crit-val run">${pct(td3Sh.filter(p=>p.playType==='Run').length,td3Sh.length)} run</span>
+            &nbsp;&mdash;&nbsp;
+            Mid 4-6:&nbsp;<span class="crit-val run">${pct(td3Mi.filter(p=>p.playType==='Run').length,td3Mi.length)} run</span>
+            &nbsp;&mdash;&nbsp;
+            Long 7+:&nbsp;<span class="crit-val run">${pct(td3Lo.filter(p=>p.playType==='Run').length,td3Lo.length)} run</span>
+          </div>
+        </div>
+
+        <div class="crit-section">
+          <div class="crit-title">ZONA ROJA &mdash; ${rz.length} jugadas (estimado)</div>
+          <div class="crit-body">
+            ${rz.length
+              ? `Run: <span class="crit-val run">${rzS.runPct}</span>
+                 &nbsp;&nbsp;Pass: <span class="crit-val pass">${rzS.passPct}</span>
+                 ${topOf(rz,'formation') ? `<br>Formaci&oacute;n: <span class="crit-val">${topOf(rz,'formation')}</span>` : ''}`
+              : 'Sin jugadas en zona roja estimadas'}
+          </div>
+        </div>
+
+        <div class="crit-section">
+          <div class="crit-title">2-MINUTE DRILL &mdash; &uacute;ltimas 5 jugadas Q2 + Q4</div>
+          <div class="crit-body">
+            ${tm.length
+              ? tm.slice(-5).map(p =>
+                  `${p.quarter} &middot; ${p.down||'?'}${ords(p.down||1)} &amp; ${p.distance||'?'} &middot;
+                   <span class="crit-val">${p.playType||'?'}</span>
+                   ${p.direction ? `(${p.direction})` : ''} &middot;
+                   <span class="crit-val ${parseInt(p.yardsGained)>=0?'green':''}">
+                     ${parseInt(p.yardsGained)>0?'+':''}${p.yardsGained} yds
+                   </span>`
+                ).join('<br>')
+              : 'Sin jugadas en Q2/Q4 a&uacute;n'}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // RENDER LOG
+  // ═══════════════════════════════════════════════════════
+  const RES_ENTRY = {
+    'Stop':     'pe-stop',
+    '1st Down': 'pe-firstdown',
+    'TD':       'pe-td',
+    'Turnover': 'pe-turnover'
+  };
+  const RES_LABEL = {
+    'Stop':     'stop',
+    '1st Down': 'firstdown',
+    'TD':       'td',
+    'Turnover': 'turnover'
+  };
+
+  function renderLog() {
+    document.getElementById('log-title').textContent =
+      `${plays.length} jugada${plays.length !== 1 ? 's' : ''}`;
+
+    const el = document.getElementById('play-log');
+    if (!plays.length) {
+      el.innerHTML = '<div class="empty-state">Sin jugadas registradas</div>';
+      return;
+    }
+
+    el.innerHTML = [...plays].reverse().map(p => {
+      const yNum     = parseInt(p.yardsGained) || 0;
+      const yCls     = yNum > 0 ? 'pos' : yNum < 0 ? 'neg' : 'zero';
+      const yStr     = yNum > 0 ? `+${yNum}` : String(yNum);
+      const entCls   = RES_ENTRY[p.result] || '';
+      const resCls   = RES_LABEL[p.result] || '';
+      const dnStr    = p.down ? `${p.down}${ords(p.down)}` : '—';
+      const distStr  = p.distance || '?';
+
+      return `
+        <div class="play-entry ${entCls}">
+          <div class="pe-q">${p.quarter}</div>
+          <div class="pe-sit">${dnStr} &amp; ${distStr}</div>
+          <div class="pe-det">
+            ${p.formation ? `<strong>${p.formation}</strong>` : ''}
+            ${p.personnel ? `[${p.personnel}]` : ''}
+            ${p.playType  ? `&middot; ${p.playType}` : ''}
+            ${p.direction ? `(${p.direction})` : ''}
+          </div>
+          <div class="pe-yds ${yCls}">${yStr}</div>
+          <div class="pe-res ${resCls}">${p.result || '—'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // RENDER PRINTOUT
+  // ═══════════════════════════════════════════════════════
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  function renderPrintout() {
+    const block = document.getElementById('printout-block');
+    if (!plays.length) {
+      block.innerHTML = '<div class="po-empty">Registra jugadas para generar el printout</div>';
+      return;
+    }
+
+    const time    = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    const total   = plays.length;
+    const overall = runPassStats(plays);
+    const fFreq   = freqOf(plays, 'formation');
+    const pFreq   = freqOf(plays, 'personnel');
+
+    const td3     = plays.filter(p => p.down === '3');
+    const td3s    = runPassStats(td3);
+    const td3Sh   = td3.filter(p => p.distance === '1-3');
+    const td3Mi   = td3.filter(p => p.distance === '4-6');
+    const td3Lo   = td3.filter(p => p.distance === '7-10' || p.distance === '10+');
+    const top3F   = topOf(td3, 'formation') || '—';
+
+    const downRows = [1,2,3,4].map(d => {
+      const s = runPassByDown(plays, d);
+      const hl = d === 3 ? ' ◄' : '';
+      return `  ${d}${ords(d)} dn:  Run ${s.runPct.padEnd ? s.runPct : s.runPct}  Pass ${s.passPct}  (${s.n})${hl}`;
+    }).join('\n');
+
+    const fRows = fFreq.length
+      ? fFreq.map(([n,c]) => `  ${n}: ${c}x (${Math.round(c/total*100)}%)`).join('\n')
+      : '  Sin datos';
+
+    const pRows = pFreq.length
+      ? pFreq.map(([n,c]) => `  ${n}: ${c}x (${Math.round(c/total*100)}%)`).join('\n')
+      : '  Sin datos';
+
+    const last5 = plays.slice(-5).reverse().map((p,i) => {
+      const dn = p.down ? `${p.down}${ords(p.down)}` : '?';
+      const y  = parseInt(p.yardsGained) || 0;
+      return `  ${i+1}. ${p.quarter} ${dn}&${p.distance||'?'} · ${p.playType||'?'}${p.direction?` (${p.direction})`:''}· ${y>0?'+':''}${y} yds · ${p.result||'?'}`;
+    }).join('\n');
+
+    block.innerHTML = `
+      <div class="po-header">TENDENCIAS DEFENSIVAS &mdash; ${esc(rivalName)} &mdash; ${activeQ} &nbsp; ${time}</div>
+      <hr class="po-hr">
+
+      <div class="po-section">RUN / PASS</div>
+      <pre style="margin:0;font-size:11px;line-height:1.7">  Total:   Run ${overall.runPct}  Pass ${overall.passPct}  (${total} jugadas)
+${downRows}</pre>
+
+      <hr class="po-hr">
+      <div class="po-section">FORMACIONES</div>
+      <pre style="margin:0;font-size:11px;line-height:1.7">${fRows}</pre>
+
+      <div class="po-section" style="margin-top:8px">PERSONNEL</div>
+      <pre style="margin:0;font-size:11px;line-height:1.7">${pRows}</pre>
+
+      <hr class="po-hr">
+      <div class="po-section">3RD DOWN DETAIL</div>
+      <pre style="margin:0;font-size:11px;line-height:1.7">  ${td3.length} jugadas de 3rd down
+  Formaci&oacute;n m&aacute;s com&uacute;n: ${esc(top3F)}
+  <span class="po-hl">Tendencia: Run ${td3s.runPct} / Pass ${td3s.passPct}</span>
+  Short (1-3): ${pct(td3Sh.filter(p=>p.playType==='Run').length,td3Sh.length)} run  |  Mid (4-6): ${pct(td3Mi.filter(p=>p.playType==='Run').length,td3Mi.length)} run  |  Long (7+): ${pct(td3Lo.filter(p=>p.playType==='Run').length,td3Lo.length)} run</pre>
+
+      <hr class="po-hr">
+      <div class="po-section">&Uacute;LTIMAS 5 JUGADAS</div>
+      <pre style="margin:0;font-size:11px;line-height:1.7">${last5}</pre>
+
+      <hr class="po-hr">
+      <div style="font-size:9px;color:#888;margin-top:4px">Borregos GameTime &mdash; ${new Date().toLocaleDateString('es')}</div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // TAB SWITCHING
+  // ═══════════════════════════════════════════════════════
+  document.getElementById('tab-nav').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const tab = btn.dataset.tab;
+
+    document.querySelectorAll('.tab-btn').forEach(b  => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+    btn.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    if (tab === 'printout') renderPrintout();
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════
+  function init() {
+    // Build chip UI from data file
+    buildChips('chips-down',       'down',      DEFENSE_OPPONENT_DATA.downs);
+    buildChips('chips-distance',   'distance',  DEFENSE_OPPONENT_DATA.distances);
+    buildChips('chips-formation',  'formation', DEFENSE_OPPONENT_DATA.formations);
+    buildChips('chips-personnel',  'personnel', DEFENSE_OPPONENT_DATA.personnel);
+    buildChips('chips-playType',   'playType',  DEFENSE_OPPONENT_DATA.playTypes);
+    buildChips('chips-direction',  'direction', DEFENSE_OPPONENT_DATA.directions);
+    buildChips('chips-result',     'result',    DEFENSE_OPPONENT_DATA.results);
+
+    loadGameContext();
+    loadPlays();
+
+    buildQuarterSelector();
+    document.getElementById('rival-name-display').textContent = rivalName;
+    updatePlayCount();
+    renderYards();
+
+    // Pre-select sticky fields from last registered play
+    if (plays.length) {
+      const last = plays[plays.length - 1];
+      if (last.formation) {
+        sticky.formation = last.formation;
+        sel.formation    = last.formation;
+        const fc = document.querySelector(`[data-field="formation"][data-value="${last.formation}"]`);
+        if (fc) fc.classList.add('active');
+      }
+      if (last.personnel) {
+        sticky.personnel = last.personnel;
+        sel.personnel    = last.personnel;
+        const pc = document.querySelector(`[data-field="personnel"][data-value="${last.personnel}"]`);
+        if (pc) pc.classList.add('active');
+      }
+    }
+
+    renderTrends();
+    renderLog();
+  }
+
+  init();
+  </script>
+</body>
+</html>

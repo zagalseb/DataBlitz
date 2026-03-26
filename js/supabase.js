@@ -7,7 +7,7 @@ const SupabaseDB = (() => {
   'use strict';
 
   const URL     = 'https://jaavutcczjshpxdoylwy.supabase.co';
-  const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
+  const ANON_KEY = 'sb_publishable_ufkc09A7Gdjz-Fk5RpJj2A_H0VRxPpL.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
 
   const HEADERS = {
     'Content-Type':  'application/json',
@@ -54,7 +54,10 @@ const SupabaseDB = (() => {
 
     await _req('teams?on_conflict=team_code', {
       method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+      headers: {
+        'Prefer': 'resolution=merge-duplicates',
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         team_code:   teamCode,
         name:        cfg.name,

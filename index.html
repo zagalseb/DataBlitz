@@ -2,6 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/DataBlitz/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DataBlitz">
+  <meta name="theme-color" content="#00C896">
+  <link rel="apple-touch-icon" href="/DataBlitz/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>PlaySync</title>
   <style>
@@ -651,6 +657,15 @@ function _contrastColor(hex) {
   const b = parseInt(h.slice(4,6),16);
   return (0.299*r + 0.587*g + 0.114*b)/255 > 0.55 ? '#000' : '#fff';
 }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/DataBlitz/sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.warn('SW error:', err));
+    });
+  }
 </script>
 </body>
 </html>

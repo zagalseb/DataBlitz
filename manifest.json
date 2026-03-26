@@ -1,0 +1,25 @@
+{
+  "name": "DataBlitz",
+  "short_name": "DataBlitz",
+  "description": "Football analytics — Gametime y Player Participation",
+  "start_url": "/DataBlitz/index.html",
+  "scope": "/DataBlitz/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d0f",
+  "theme_color": "#00C896",
+  "icons": [
+    {
+      "src": "/DataBlitz/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/DataBlitz/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

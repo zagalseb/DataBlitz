@@ -40,6 +40,7 @@ function logPlay(extra = {}) {
     notes:        extra.notes || '',
     // Possession mode
     mode:             State.possessionMode,
+    stRole:           State.possessionMode === 'st' ? State.stRole : null,
     // Defense
     selectedFront:    State.selectedFront,
     selectedBlitz:    State.selectedBlitz,

@@ -34,7 +34,7 @@
       <nav class="main-nav">
         <a class="nav-link active" href="game.html">GAME</a>
         <a class="nav-link" href="playbook.html">PLAYBOOK</a>
-        <a class="nav-link" href="analysis.html">ANALYSIS</a>
+        <a class="nav-link" href="summary.html">RESUMEN</a>
       </nav>
       <a class="icon-btn" href="index.html" aria-label="Inicio" title="Inicio" style="margin-left:4px;text-decoration:none;">
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -80,6 +80,10 @@
         <button class="poss-btn active" data-mode="own">OWN</button>
         <button class="poss-btn" data-mode="opp">OPP</button>
         <button class="poss-btn" data-mode="st">ST</button>
+      </div>
+      <div id="st-role-toggle" style="display:none; gap:4px;" class="st-role-wrap">
+        <button class="st-role-btn active" data-role="kicking">⬆ Kick</button>
+        <button class="st-role-btn"        data-role="return">⬇ Return</button>
       </div>
       <button class="btn-secondary" id="btn-end-drive">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -353,6 +357,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      if (!TeamConfig.requireTeam()) return;
+      // Redirigir si el equipo no tiene acceso al producto GAMETIME
+      const _prods = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+      if (!_prods.includes('gametime')) {
+        window.location.href = 'index.html';
+        return;
+      }
       TeamConfig.apply();
     });
   </script>

@@ -51,13 +51,34 @@ const TeamConfig = (() => {
     return getTeams().some(t => t.code === code.toUpperCase().trim());
   }
 
-  function registerTeam(code) {
+  function registerTeam(code, products) {
     const teams = getTeams();
     const normalized = code.toUpperCase().trim();
     if (!teams.some(t => t.code === normalized)) {
-      teams.push({ code: normalized, createdAt: new Date().toISOString() });
+      teams.push({
+        code: normalized,
+        createdAt: new Date().toISOString(),
+        products: Array.isArray(products) ? products : ['gametime', 'pp'],
+      });
       saveTeams(teams);
     }
+  }
+
+  function getTeamProducts(code) {
+    const normalized = (code || '').toUpperCase().trim();
+    const team = getTeams().find(t => t.code === normalized);
+    if (!team) return [];
+    // Backward compatible: si no tiene products, asumir acceso a ambos
+    return Array.isArray(team.products) ? team.products : ['gametime', 'pp'];
+  }
+
+  function updateTeamProducts(code, products) {
+    const normalized = (code || '').toUpperCase().trim();
+    const teams = getTeams();
+    const idx = teams.findIndex(t => t.code === normalized);
+    if (idx === -1) return;
+    teams[idx] = { ...teams[idx], products: Array.isArray(products) ? products : [] };
+    saveTeams(teams);
   }
 
   function removeTeam(code) {
@@ -169,7 +190,7 @@ const TeamConfig = (() => {
     key,
     get, set, isConfigured,
     getActiveTeam, setActiveTeam, clearActiveTeam,
-    getTeams, registerTeam, removeTeam, teamExists,
+    getTeams, registerTeam, removeTeam, teamExists, getTeamProducts, updateTeamProducts,
     login, logout,
     apply, requireTeam,
   };

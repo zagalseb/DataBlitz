@@ -29,34 +29,14 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .team-name-wrap {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 2px;
-    }
-    .team-name-display {
+    .team-name-sub {
       font-size: 12px;
       color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 1px dashed transparent;
-      transition: border-color .15s;
+      margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
     }
-    .team-name-display:hover { border-bottom-color: var(--text-muted); }
-    .team-name-input {
-      font-size: 12px;
-      padding: 2px 6px;
-      background: var(--bg-card);
-      border: 1px solid var(--accent);
-      border-radius: 4px;
-      color: var(--text-primary);
-      width: 180px;
-    }
-    .team-name-input:focus { outline: none; }
 
     /* Games list */
     .games-section {
@@ -322,14 +302,10 @@
        HEADER
   ══════════════════════════════════ -->
   <header class="app-header">
+    <a href="../index.html" class="btn btn-ghost btn-sm" style="flex-shrink:0">← Hub</a>
     <div class="app-header-brand">
       <h1>Player Participation</h1>
-      <div class="team-name-wrap">
-        <span class="team-name-display" id="team-name-display" onclick="startEditTeamName()" title="Toca para editar">—</span>
-        <input type="text" class="team-name-input hidden" id="team-name-input"
-               placeholder="Nombre del equipo"
-               onblur="saveTeamName()" onkeydown="teamNameKey(event)">
-      </div>
+      <div class="team-name-sub" id="team-name-sub"></div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="openModal()">+ Nuevo</button>
   </header>
@@ -404,6 +380,7 @@
       <div class="modal-tabs">
         <button class="modal-tab-btn active" id="tab-csv-btn"    onclick="switchTab('csv')">Cargar CSV</button>
         <button class="modal-tab-btn"         id="tab-manual-btn" onclick="switchTab('manual')">Manual</button>
+        <button class="modal-tab-btn"         id="tab-gt-btn"     onclick="switchTab('gametime')">Desde Gametime</button>
       </div>
 
       <!-- Shared fields -->
@@ -450,6 +427,14 @@
         </div>
       </div>
 
+      <!-- Gametime tab content -->
+      <div id="tab-gametime" class="hidden">
+        <div id="gt-empty" class="hidden" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">
+          No hay partidos de Gametime disponibles para importar.
+        </div>
+        <div id="gt-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+      </div>
+
       <!-- Manual tab content -->
       <div id="tab-manual" class="hidden">
         <div class="form-group mt-1">
@@ -479,6 +464,7 @@
   <!-- ══════════════════════════════════
        SCRIPTS
   ══════════════════════════════════ -->
+  <script src="../js/teamConfig.js"></script>
   <script src="app.js"></script>
   <script>
   'use strict';
@@ -489,43 +475,19 @@
 
   /* ─── Init ─── */
   document.addEventListener('DOMContentLoaded', () => {
+    // Guard — redirigir si no hay equipo activo o no tiene acceso a PP
+    if (!TeamConfig.requireTeam()) return;
+    const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+    if (!_products.includes('pp')) {
+      window.location.href = '../index.html';
+      return;
+    }
+    TeamConfig.apply();
+    document.getElementById('team-name-sub').textContent = TeamConfig.get().name;
     document.getElementById('f-date').value = todayISO();
-    loadTeamName();
     renderGameList();
     updateQuickStats();
   });
-
-  /* ─────────────────────────────────────────────
-     TEAM NAME
-  ───────────────────────────────────────────── */
-  function loadTeamName() {
-    const name = localStorage.getItem('pp_team_name') || '';
-    document.getElementById('team-name-display').textContent = name || 'Toca para agregar equipo';
-  }
-
-  function startEditTeamName() {
-    const display = document.getElementById('team-name-display');
-    const input   = document.getElementById('team-name-input');
-    input.value = localStorage.getItem('pp_team_name') || '';
-    display.classList.add('hidden');
-    input.classList.remove('hidden');
-    input.focus();
-    input.select();
-  }
-
-  function saveTeamName() {
-    const input   = document.getElementById('team-name-input');
-    const display = document.getElementById('team-name-display');
-    const val     = input.value.trim();
-    if (val) localStorage.setItem('pp_team_name', val);
-    display.textContent = val || 'Toca para agregar equipo';
-    input.classList.add('hidden');
-    display.classList.remove('hidden');
-  }
-
-  function teamNameKey(e) {
-    if (e.key === 'Enter' || e.key === 'Escape') saveTeamName();
-  }
 
   /* ─────────────────────────────────────────────
      RENDER GAME LIST
@@ -677,6 +639,7 @@
 
   function resetModal() {
     csvText = null;
+    selectedGametimeId = null;
     document.getElementById('f-name').value     = '';
     document.getElementById('f-opponent').value = '';
     document.getElementById('f-date').value     = todayISO();
@@ -685,6 +648,8 @@
     document.getElementById('file-name-display').textContent = '';
     document.getElementById('missing-formations-box').classList.add('hidden');
     document.getElementById('missing-formations-list').textContent = '';
+    document.getElementById('gt-list').innerHTML = '';
+    document.getElementById('gt-empty').classList.add('hidden');
     switchTab('csv');
   }
 
@@ -692,8 +657,11 @@
     activeTab = tab;
     document.getElementById('tab-csv').classList.toggle('hidden', tab !== 'csv');
     document.getElementById('tab-manual').classList.toggle('hidden', tab !== 'manual');
+    document.getElementById('tab-gametime').classList.toggle('hidden', tab !== 'gametime');
     document.getElementById('tab-csv-btn').classList.toggle('active', tab === 'csv');
     document.getElementById('tab-manual-btn').classList.toggle('active', tab === 'manual');
+    document.getElementById('tab-gt-btn').classList.toggle('active', tab === 'gametime');
+    if (tab === 'gametime') renderGametimeList();
   }
 
   /* ─────────────────────────────────────────────
@@ -753,6 +721,65 @@
   }
 
   /* ─────────────────────────────────────────────
+     GAMETIME IMPORT
+  ───────────────────────────────────────────── */
+  let selectedGametimeId = null;
+
+  function renderGametimeList() {
+    const available = getGametimeGamesAvailable();
+    const list  = document.getElementById('gt-list');
+    const empty = document.getElementById('gt-empty');
+
+    if (!available.length) {
+      empty.classList.remove('hidden');
+      list.innerHTML = '';
+      return;
+    }
+    empty.classList.add('hidden');
+    list.innerHTML = available.map(g => {
+      const plays      = g.state?.history?.length ?? 0;
+      const weekStr    = g.week ? (isNaN(g.week) ? g.week : `Semana ${g.week}`) : '';
+      const displayName = [g.teamHome, 'vs', g.teamAway, weekStr ? `— ${weekStr}` : '']
+        .filter(Boolean).join(' ');
+      const suggestedName = displayName;
+      const dateStr    = g.date || 'Sin fecha';
+      return `
+        <div style="background:var(--bg-card);border:1px solid var(--border);
+                    border-radius:var(--radius-md);padding:12px 14px;
+                    display:flex;align-items:center;gap:12px;cursor:pointer"
+             data-suggested="${esc(suggestedName)}"
+             onclick="selectGametimeGame('${g.id}', this)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700">${esc(displayName)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(dateStr)} · ${plays} jugadas</div>
+          </div>
+          <div id="gt-check-${g.id}" style="font-size:18px;color:var(--accent);opacity:0">✓</div>
+        </div>`;
+    }).join('');
+  }
+
+  function selectGametimeGame(id, el) {
+    selectedGametimeId = id;
+    document.querySelectorAll('#gt-list > div').forEach(d => {
+      d.style.borderColor = '';
+      d.querySelector('[id^="gt-check-"]').style.opacity = '0';
+    });
+    el.style.borderColor = 'var(--accent)';
+    document.getElementById(`gt-check-${id}`).style.opacity = '1';
+    // Pre-fill nombre con el valor sugerido (el usuario puede editarlo)
+    const suggested = el.dataset.suggested || '';
+    document.getElementById('f-name').value = suggested;
+    // Pre-fill rival
+    const available = getGametimeGamesAvailable();
+    const game = available.find(g => g.id === id);
+    if (game) {
+      if (!document.getElementById('f-opponent').value.trim())
+        document.getElementById('f-opponent').value = game.teamAway || '';
+      // No pre-fill fecha: está en formato localizado, no ISO
+    }
+  }
+
+  /* ─────────────────────────────────────────────
      CREATE GAME
   ───────────────────────────────────────────── */
   function createGame() {
@@ -777,6 +804,18 @@
         gameId = createGameFromCSV(csvText, { name, opponent, date });
       } catch (err) {
         showToast('Error al leer el CSV — revisa el formato');
+        console.error(err);
+        return;
+      }
+    } else if (activeTab === 'gametime') {
+      if (!selectedGametimeId) {
+        showToast('Selecciona un partido de Gametime');
+        return;
+      }
+      try {
+        gameId = importGameFromGametime(selectedGametimeId, name);
+      } catch (err) {
+        showToast('Error al importar — verifica que el partido tenga jugadas');
         console.error(err);
         return;
       }

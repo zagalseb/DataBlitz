@@ -238,12 +238,14 @@
   </style>
 </head>
 <body>
+<script src="../js/teamConfig.js"></script>
 <script src="app.js"></script>
 
 <!-- ══════════════════════════════════
      HEADER
 ══════════════════════════════════ -->
 <header class="season-header">
+  <a href="../index.html" class="btn btn-ghost btn-sm" style="flex-shrink:0">← Hub</a>
   <div class="sh-info">
     <h1>Temporada</h1>
     <div class="sh-sub" id="sh-sub">—</div>
@@ -357,6 +359,15 @@ const GRADE_CATS = [
    INIT
 ═══════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  // Guard — redirigir si no hay equipo activo o no tiene acceso a PP
+  if (!TeamConfig.requireTeam()) return;
+  const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+  if (!_products.includes('pp')) {
+    window.location.href = '../index.html';
+    return;
+  }
+  TeamConfig.apply();
+
   allGames = getGames().sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;
@@ -366,8 +377,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   allGames.forEach(g => selectedGameIds.add(g.id));
 
-  const teamName = localStorage.getItem('pp_team_name') || '';
-  document.getElementById('sh-sub').textContent = teamName || 'Sin equipo configurado';
+  document.getElementById('sh-sub').textContent = TeamConfig.get().name || '';
 
   renderGameSelector();
   populatePositionFilter();
@@ -398,7 +408,7 @@ function goReport() {
 ═══════════════════════════════════════════════════ */
 function renderGameSelector() {
   const list = document.getElementById('game-selector-list');
-  const teamName = localStorage.getItem('pp_team_name') || 'Local';
+  const teamName = TeamConfig.get().name || 'Local';
 
   if (!allGames.length) {
     list.innerHTML = `

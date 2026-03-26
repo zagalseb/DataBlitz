@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analysis — PlaySync</title>
+  <title>Resumen — PlaySync</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1446,7 +1446,7 @@
       }).join('');
       return `<table class="analysis-table">
         <thead><tr>
-          <th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>Éxito %</th>
+          <th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>% Logrado</th>
         </tr></thead>
         <tbody>${body}</tbody>
       </table>`;
@@ -1504,7 +1504,7 @@
 
       return `<table class="analysis-table" id="concepts-table">
         <thead><tr>
-          <th>Jugada</th><th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>Éxito %</th><th></th>
+          <th>Jugada</th><th>Formación</th><th>N</th><th>Total Yds</th><th>Avg Yds</th><th>% Logrado</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
@@ -1586,12 +1586,6 @@
 
     function render() {
       if (!TeamConfig.requireTeam()) return;
-      // Redirigir si el equipo no tiene acceso al producto GAMETIME
-      const _prods = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
-      if (!_prods.includes('gametime')) {
-        window.location.href = 'index.html';
-        return;
-      }
       TeamConfig.apply();
       const root  = document.getElementById('root');
       const state = loadState();
@@ -1607,7 +1601,7 @@
             <nav class="main-nav">
               <a class="nav-link" href="game.html">GAME</a>
               <a class="nav-link" href="playbook.html">PLAYBOOK</a>
-              <a class="nav-link active" href="analysis.html">ANALYSIS</a>
+              <a class="nav-link active" href="summary.html">RESUMEN</a>
             </nav>
           </header>
           <div class="no-game">
@@ -1662,7 +1656,7 @@
           <nav class="main-nav">
             <a class="nav-link" href="game.html">GAME</a>
             <a class="nav-link" href="playbook.html">PLAYBOOK</a>
-            <a class="nav-link active" href="analysis.html">ANALYSIS</a>
+            <a class="nav-link active" href="summary.html">RESUMEN</a>
           </nav>
           <div class="tb-right">
             <div class="tb-score">
@@ -1685,8 +1679,8 @@
 
         <!-- Tab bar -->
         <div class="tab-bar">
-          <button class="tab-btn" data-tab="own">Ofensiva (OWN)</button>
-          <button class="tab-btn" data-tab="opp">Rival (OPP)</button>
+          <button class="tab-btn" data-tab="own">Ofensiva</button>
+          <button class="tab-btn" data-tab="opp">Defensiva</button>
         </div>
 
         <div class="refresh-bar">
@@ -1709,14 +1703,14 @@
                   <div style="font-size:14px;font-weight:900;">${esc(state.teamHome)} <span style="font-weight:400;font-size:11px;">vs</span> ${esc(state.teamAway)}</div>
                   <div style="font-size:9px;color:#555;margin-top:1px;">${esc(state.teamHome)} ${state.scoreHome} — ${esc(state.teamAway)} ${state.scoreAway} &nbsp;·&nbsp; ${quarter} &nbsp;·&nbsp; ${downStr} &nbsp;·&nbsp; ${own.length} jugadas</div>
                 </div>
-                <div style="font-size:8px;color:#777;">Analysis OWN &nbsp;·&nbsp; ${new Date().toLocaleDateString('es-MX')}</div>
+                <div style="font-size:8px;color:#777;">Resumen &nbsp;·&nbsp; ${new Date().toLocaleDateString('es-MX')}</div>
               </div>
             </div>
 
             <!-- Col 1: Success rate -->
             <div class="card">
               <div class="card-head">
-                <span class="card-title">Efectividad Ofensiva</span>
+                <span class="card-title">Tasa de Éxito Ofensiva</span>
               </div>
               ${successCardHTML(overallSuccess)}
             </div>
@@ -1736,7 +1730,7 @@
             <!-- Col 1: Tendencias ofensivas -->
             <div class="card">
               <div class="card-head">
-                <span class="card-title">Tendencias por Down y Distancia</span>
+                <span class="card-title">Conteo por Down y Distancia</span>
               </div>
               <div class="card-body" style="padding:0;">
                 ${tendencyTableHTML(tendencies)}
@@ -1756,7 +1750,7 @@
             <!-- Full width: Defense usage -->
             <div class="card col-full">
               <div class="card-head">
-                <span class="card-title">Defensiva Rival — Front / Blitz / Coverage</span>
+                <span class="card-title">Conteo Defensivo Rival</span>
               </div>
               ${defUsageHTML(defUsage)}
             </div>
@@ -1774,7 +1768,7 @@
             <!-- Col 2: Defense killers -->
             <div class="card no-print">
               <div class="card-head">
-                <span class="card-title">Te han detenido</span>
+                <span class="card-title">Jugadas de Mayor Ganancia Rival</span>
               </div>
               ${killersHTML(killers)}
             </div>
@@ -1782,7 +1776,7 @@
             <!-- Full width: Concepts/plays table -->
             <div class="card col-full no-print">
               <div class="card-head">
-                <span class="card-title">Conceptos y Jugadas</span>
+                <span class="card-title">Conteo de Jugadas</span>
               </div>
               <div class="card-body" style="padding:0;">
                 ${conceptsTableHTML(concepts)}
@@ -1792,7 +1786,7 @@
             <!-- Full width: Formation × Situation matrix -->
             <div class="card col-full no-print">
               <div class="card-head">
-                <span class="card-title">Formaciones por Situación — Run / Pass</span>
+                <span class="card-title">Conteo de Formaciones por Situación</span>
               </div>
               <div class="card-body" style="padding:0;">
                 ${formationSituationTableHTML(own)}

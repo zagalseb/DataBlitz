@@ -68,6 +68,15 @@ function renderAll() {
     b.classList.toggle('active', b.dataset.mode === State.possessionMode)
   );
 
+  // Sync ST role toggle visibility and active state
+  const stToggle = document.getElementById('st-role-toggle');
+  if (stToggle) {
+    stToggle.style.display = State.possessionMode === 'st' ? 'flex' : 'none';
+    document.querySelectorAll('.st-role-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.role === State.stRole)
+    );
+  }
+
   // Auto-save
   GameManager.autosave();
 }
@@ -268,20 +277,44 @@ function initEvents() {
       if (btn.dataset.mode === State.possessionMode) return;
       State.possessionMode = btn.dataset.mode;
       if (btn.dataset.mode === 'st') {
+        State.stRole = 'kicking';
+        document.getElementById('st-role-toggle').style.display = 'flex';
         State.selectedFormation = 'st-kicking';
         const stPlays = getPlaysForFormation('st-kicking');
         State.selectedPlay = stPlays[0]?.id || '';
         State.playType = 'run';
-      } else if (btn.dataset.mode === 'opp') {
-        State.selectedFormation = 'opp-shotgun';
-        const oppPlays = getPlaysForFormation('opp-shotgun');
-        State.selectedPlay = oppPlays[0]?.id || '';
       } else {
-        State.selectedFormation = 'max';
-        const ownPlays = getPlaysForFormation('max');
-        State.selectedPlay = ownPlays[0]?.id || '';
+        document.getElementById('st-role-toggle').style.display = 'none';
+        if (btn.dataset.mode === 'opp') {
+          State.selectedFormation = 'opp-shotgun';
+          const oppPlays = getPlaysForFormation('opp-shotgun');
+          State.selectedPlay = oppPlays[0]?.id || '';
+        } else {
+          State.selectedFormation = 'max';
+          const ownPlays = getPlaysForFormation('max');
+          State.selectedPlay = ownPlays[0]?.id || '';
+        }
       }
       State.selectedMotion = 'none';
+      renderAll();
+    });
+  });
+
+  // ST role toggle — Kicking / Return
+  document.querySelectorAll('.st-role-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.role === State.stRole) return;
+      State.stRole = btn.dataset.role;
+      document.querySelectorAll('.st-role-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.role === State.stRole)
+      );
+      if (State.stRole === 'kicking') {
+        State.selectedFormation = 'st-kicking';
+      } else {
+        State.selectedFormation = 'st-return';
+      }
+      const stPlays = getPlaysForFormation(State.selectedFormation);
+      State.selectedPlay = stPlays[0]?.id || '';
       renderAll();
     });
   });

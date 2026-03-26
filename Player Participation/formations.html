@@ -239,6 +239,7 @@
   <div id="view-list">
 
     <header class="page-header">
+      <a href="../index.html" class="btn btn-ghost btn-sm" style="flex-shrink:0">← Hub</a>
       <button class="header-back" onclick="location.href='index.html'" aria-label="Volver">←</button>
       <div class="header-title-wrap">
         <div class="header-title">Formaciones</div>
@@ -286,6 +287,40 @@
     </nav>
 
   </div><!-- #view-list -->
+
+  <!-- ══════════════════════════════════
+       MODAL — NUEVA FORMACIÓN (unidad + OL)
+  ══════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-new-formation" onclick="newFormationBgClick(event)">
+    <div class="modal-box" style="max-width:340px">
+      <div class="modal-title" style="margin-bottom:1rem">Nueva formación</div>
+
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">¿Para qué unidad?</label>
+        <div class="unit-toggle" id="nf-unit-toggle">
+          <button class="unit-toggle-btn active" data-unit="OFE" onclick="selectNewFormationUnit('OFE')">OFE</button>
+          <button class="unit-toggle-btn"        data-unit="DEF" onclick="selectNewFormationUnit('DEF')">DEF</button>
+          <button class="unit-toggle-btn"        data-unit="ST"  onclick="selectNewFormationUnit('ST')">ST</button>
+        </div>
+      </div>
+
+      <div id="nf-ol-section" style="margin-bottom:1.25rem">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-muted)">
+          <input type="checkbox" id="nf-ol-check" checked
+                 style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+          Incluir línea ofensiva (OL) pre-posicionada
+        </label>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;padding-left:26px">
+          LT · LG · C · RG · RT en y:66
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeNewFormationModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmNewFormation()">Continuar →</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════
        EDITOR VIEW (fixed full-screen overlay)
@@ -355,6 +390,7 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
+  <script src="../js/teamConfig.js"></script>
   <script src="app.js"></script>
   <script>
   'use strict';
@@ -368,10 +404,29 @@
   let selectedChipId   = null;
   let isDragging       = false;
 
+  // Estado del modal "Nueva formación"
+  let _newFormUnit   = 'OFE';
+  let _newFormWithOL = true;
+
+  const OL_POSITIONS = [
+    { label: 'OL-LT', x: 42, y: 66 },
+    { label: 'OL-LG', x: 46, y: 66 },
+    { label: 'OL-C',  x: 50, y: 66 },
+    { label: 'OL-RG', x: 54, y: 66 },
+    { label: 'OL-RT', x: 58, y: 66 },
+  ];
+
   /* ─────────────────────────────────────────────
      INIT
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
+    if (!TeamConfig.requireTeam()) return;
+    const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+    if (!_products.includes('pp')) {
+      window.location.href = '../index.html';
+      return;
+    }
+    TeamConfig.apply();
     formations = getFormations();
     renderList();
     updateCounter();
@@ -542,38 +597,88 @@
      EDITOR — OPEN / CLOSE
   ───────────────────────────────────────────── */
   function openEditor(idOrNull) {
-    if (idOrNull) {
-      const f = formations.find(x => x.id === idOrNull);
-      if (!f) return;
-      // Deep copy so edits don't mutate originals until Save
-      editingFormation = {
-        id:        f.id,
-        name:      f.name,
-        unit:      f.unit,
-        isDefault: f.isDefault || false,
-        positions: (f.positions || []).map(p => ({ ...p })),
-      };
-    } else {
-      editingFormation = {
-        id:        generateId(),
-        name:      '',
-        unit:      'OFE',
-        isDefault: false,
-        positions: [],
-      };
+    if (!idOrNull) {
+      // Nueva formación → mostrar modal de unidad primero
+      openNewFormationModal();
+      return;
     }
 
+    // Editar existente — comportamiento sin cambios
+    const f = formations.find(x => x.id === idOrNull);
+    if (!f) return;
+    editingFormation = {
+      id:        f.id,
+      name:      f.name,
+      unit:      f.unit,
+      isDefault: f.isDefault || false,
+      positions: (f.positions || []).map(p => ({ ...p })),
+    };
     selectedChipId = null;
-
-    document.getElementById('f-form-name').value = editingFormation.name;
-    setEditorUnit(editingFormation.unit);
-    document.getElementById('editor-title').textContent =
-      editingFormation.name || 'Nueva formación';
-
-    document.getElementById('view-editor').classList.add('active');
+    document.getElementById('f-form-name').value = f.name;
+    selectEditorUnit(f.unit);
     renderEditorField();
     updateChipCount();
     syncLabelPanel();
+    document.getElementById('editor-title').textContent = f.name || 'Editar formación';
+    document.getElementById('view-editor').classList.add('active');
+  }
+
+  function openNewFormationModal() {
+    _newFormUnit   = 'OFE';
+    _newFormWithOL = true;
+
+    document.querySelectorAll('#nf-unit-toggle .unit-toggle-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.unit === 'OFE');
+    });
+    document.getElementById('nf-ol-check').checked = true;
+    document.getElementById('nf-ol-section').style.display = 'block';
+    document.getElementById('modal-new-formation').classList.remove('hidden');
+  }
+
+  function closeNewFormationModal() {
+    document.getElementById('modal-new-formation').classList.add('hidden');
+  }
+
+  function newFormationBgClick(e) {
+    if (e.target === document.getElementById('modal-new-formation')) closeNewFormationModal();
+  }
+
+  function selectNewFormationUnit(unit) {
+    _newFormUnit = unit;
+    document.querySelectorAll('#nf-unit-toggle .unit-toggle-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.unit === unit);
+    });
+    document.getElementById('nf-ol-section').style.display = unit === 'OFE' ? 'block' : 'none';
+  }
+
+  function confirmNewFormation() {
+    closeNewFormationModal();
+
+    const withOL = _newFormUnit === 'OFE' && document.getElementById('nf-ol-check').checked;
+
+    const positions = withOL
+      ? OL_POSITIONS.map(p => ({ id: 'pos_' + generateId(), label: p.label, x: p.x, y: p.y }))
+      : [];
+
+    editingFormation = {
+      id:        generateId(),
+      name:      '',
+      unit:      _newFormUnit,
+      isDefault: false,
+      positions,
+    };
+
+    selectedChipId = null;
+
+    document.getElementById('f-form-name').value = '';
+    selectEditorUnit(_newFormUnit);
+    renderEditorField();
+    updateChipCount();
+    syncLabelPanel();
+
+    document.getElementById('editor-title').textContent = 'Nueva formación';
+    document.getElementById('view-editor').classList.add('active');
+    document.getElementById('f-form-name').focus();
   }
 
   function cancelEditor() {

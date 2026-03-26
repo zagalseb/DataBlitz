@@ -318,7 +318,7 @@
     <nav class="main-nav">
       <a class="nav-link" href="game.html">GAME</a>
       <a class="nav-link active" href="playbook.html">PLAYBOOK</a>
-      <a class="nav-link" href="analysis.html">ANALYSIS</a>
+      <a class="nav-link" href="summary.html">RESUMEN</a>
     </nav>
   </header>
 
@@ -909,6 +909,14 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (!TeamConfig.requireTeam()) return;
     TeamConfig.apply();
+
+    // Redirigir si el equipo no tiene acceso al producto GAMETIME
+    const _prods = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+    if (!_prods.includes('gametime')) {
+      window.location.href = 'index.html';
+      return;
+    }
+
     loadAll();
 
     document.querySelectorAll('.pb-tab').forEach(btn =>

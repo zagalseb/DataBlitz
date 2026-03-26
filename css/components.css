@@ -2277,6 +2277,26 @@
 .poss-btn[data-mode="st"].active  { background: #f5a623; color: #000; }
 .poss-btn:not(.active):hover      { background: var(--bg-item); color: var(--text-secondary); }
 
+/* ── ST role toggle ── */
+.st-role-wrap {
+  display: flex;
+  align-items: center;
+}
+.st-role-btn {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  background: var(--bg-item);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.st-role-btn.active { background: var(--accent); color: #000; }
+.st-role-btn:not(.active):hover { background: var(--bg-hover, var(--bg-item)); color: var(--text-secondary); }
+
 /* ── History filter ── */
 .history-filter {
   display: flex;

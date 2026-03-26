@@ -308,6 +308,7 @@
        HEADER
   ══════════════════════════════════ -->
   <header class="page-header">
+    <a href="../index.html" class="btn btn-ghost btn-sm" style="flex-shrink:0">← Hub</a>
     <button class="header-back" onclick="location.href='index.html'" aria-label="Volver">←</button>
     <div class="header-title-wrap">
       <div class="header-title">Roster</div>
@@ -356,7 +357,7 @@
           <span style="color:var(--text-primary);font-weight:700"># Formato esperado:</span><br>
           #, Nombre, Posición, Unidad<br>
           7, Carlos Ramos, QB, OFE<br>
-          55, Luis Torres, C, OFE
+          55, Luis Torres, OL-C, OFE
         </div>
 
         <div class="form-group">
@@ -369,7 +370,7 @@
 
         <div class="form-group">
           <textarea id="csv-paste" rows="5"
-                    placeholder="#,Nombre,Posición,Unidad&#10;7,Carlos Ramos,QB,OFE&#10;55,Luis Torres,C,OFE"
+                    placeholder="#,Nombre,Posición,Unidad&#10;7,Carlos Ramos,QB,OFE&#10;55,Luis Torres,OL-C,OFE"
                     oninput="onCSVPaste(this.value)"></textarea>
         </div>
 
@@ -453,7 +454,7 @@
             <option>QB</option>
             <option>OL-LT</option>
             <option>OL-LG</option>
-            <option>C</option>
+            <option>OL-C</option>
             <option>OL-RG</option>
             <option>OL-RT</option>
             <option>WR</option>
@@ -511,6 +512,7 @@
   <!-- ══════════════════════════════════
        SCRIPTS
   ══════════════════════════════════ -->
+  <script src="../js/teamConfig.js"></script>
   <script src="app.js"></script>
   <script>
   'use strict';
@@ -526,20 +528,20 @@
   let importPlayers   = [];
   let importMode      = 'add';
 
-  /* ─── Position → unit map ─── */
-  const POS_UNIT_MAP = {
-    'QB': 'OFE', 'OL-LT': 'OFE', 'OL-LG': 'OFE', 'C': 'OFE',
-    'OL-RG': 'OFE', 'OL-RT': 'OFE', 'WR': 'OFE', 'SLOT': 'OFE',
-    'TE': 'OFE', 'RB': 'OFE', 'FB': 'OFE', 'H-Back': 'OFE',
-    'DE': 'DEF', 'DT': 'DEF', 'NT': 'DEF', 'MLB': 'DEF',
-    'WILL': 'DEF', 'SAM': 'DEF', 'CB': 'DEF', 'FS': 'DEF', 'SS': 'DEF', 'NB': 'DEF',
-    'K': 'ST', 'P': 'ST', 'LS': 'ST', 'KR': 'ST', 'PR': 'ST',
-  };
+  /* ─── Position → unit map (definido globalmente en app.js) ─── */
 
   /* ─────────────────────────────────────────────
      INIT
   ───────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
+    // Guard — redirigir si no hay equipo activo o no tiene acceso a PP
+    if (!TeamConfig.requireTeam()) return;
+    const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+    if (!_products.includes('pp')) {
+      window.location.href = '../index.html';
+      return;
+    }
+    TeamConfig.apply();
     allPlayers = getRoster();
     applyFilters();
     updateCounter();

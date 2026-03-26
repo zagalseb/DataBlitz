@@ -75,6 +75,7 @@
     }
     .unit-btn.active-ofe { background: var(--accent); color: #fff; }
     .unit-btn.active-def { background: var(--danger); color: #fff; }
+    .unit-btn.active-st  { background: rgba(76, 175, 80, 0.18); border-color: #4caf50; color: #4caf50; }
 
     .play-nav-btns {
       display: flex; gap: 4px; flex-shrink: 0;
@@ -424,6 +425,7 @@
 
     <!-- Sub-header -->
     <div class="play-header" id="play-header">
+      <a href="../index.html" class="btn btn-ghost btn-sm" style="flex-shrink:0">← Hub</a>
       <button class="play-header-back" onclick="location.href='index.html'" title="Volver">←</button>
       <div class="play-header-info">
         <div class="play-counter" id="play-counter">—</div>
@@ -432,6 +434,7 @@
       <div class="unit-toggle">
         <button class="unit-btn" id="unit-ofe-btn" onclick="setUnit('OFE')">OFE</button>
         <button class="unit-btn" id="unit-def-btn" onclick="setUnit('DEF')">DEF</button>
+        <button class="unit-btn" id="unit-st-btn"  onclick="setUnit('ST')">ST</button>
       </div>
       <div class="play-nav-btns">
         <button class="play-nav-btn" id="btn-prev" onclick="prevPlay()" title="Jugada anterior" disabled>‹</button>
@@ -454,6 +457,7 @@
         <button class="btn-move" id="btn-move" onclick="toggleMoveMode()">Mover</button>
         <div class="field-controls-right">
           <button class="btn-field-sm" onclick="openNewPlayModal()">+ Jugada</button>
+          <button class="btn-field-sm" id="btn-formation" onclick="openFormationPicker()">🏈 Formación</button>
           <button class="btn-field-sm" onclick="addPosition()">+ Pos</button>
           <button class="btn-field-sm" onclick="confirmClearLineup()">Limpiar lineup</button>
         </div>
@@ -669,8 +673,24 @@
 <div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════════
+     MODAL — CAMBIAR FORMACIÓN
+══════════════════════════════════ -->
+<div class="player-modal-overlay hidden" id="formation-picker-modal"
+     onclick="formationPickerBgClick(event)">
+  <div class="player-modal-box">
+    <div class="player-modal-header">
+      <div class="player-modal-title">Cambiar formación</div>
+      <button class="modal-close" onclick="closeFormationPicker()" style="position:static">✕</button>
+    </div>
+    <div class="player-modal-list" id="formation-picker-list"
+         style="padding: 6px 0 16px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
      SCRIPTS
 ══════════════════════════════════ -->
+<script src="../js/teamConfig.js"></script>
 <script src="app.js"></script>
 <script>
 'use strict';
@@ -697,6 +717,15 @@ let touchStartY = 0;
    INIT
 ═══════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  // Guard — redirigir si no hay equipo activo o no tiene acceso a PP
+  if (!TeamConfig.requireTeam()) return;
+  const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
+  if (!_products.includes('pp')) {
+    window.location.href = '../index.html';
+    return;
+  }
+  TeamConfig.apply();
+
   // Read game id from URL or session
   const params = new URLSearchParams(location.search);
   const gameId = params.get('game');
@@ -712,7 +741,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Show match name
   const matchLabel = currentGame.opponent
-    ? `${localStorage.getItem('pp_team_name') || 'Local'} vs ${currentGame.opponent}`
+    ? `${TeamConfig.get().name || 'Local'} vs ${currentGame.opponent}`
     : currentGame.name;
   document.getElementById('play-match').textContent = matchLabel;
 
@@ -760,7 +789,9 @@ function loadPlay(index) {
   const play = plays[index];
 
   // Detect unit from play or keep activeUnit
-  if (play.unit) activeUnit = play.unit;
+  if (play.unit) {
+    activeUnit = play.unit.startsWith('ST') ? 'ST' : play.unit;
+  }
 
   // Detectar si la formación cambió respecto a la jugada anterior
   const prevPlay         = index > 0 ? plays[index - 1] : null;
@@ -992,7 +1023,7 @@ function renderField() {
 
 // Heuristic: determine unit from position label
 function getPositionUnit(label) {
-  const ofeLabels = ['QB','RB','FB','WR','TE','OL','C','LT','RT','LG','RG','SLOT','H','F','Y','Z','X','T'];
+  const ofeLabels = ['QB','RB','FB','WR','TE','OL','OL-C','LT','RT','LG','RG','SLOT','H','F','Y','Z','X','T'];
   const defLabels = ['DL','DE','DT','NT','LB','ILB','OLB','MLB','CB','S','FS','SS','DB','MIKE','WILL','SAM'];
   const up = label ? label.toUpperCase() : '';
   for (const l of defLabels) { if (up.startsWith(l)) return 'DEF'; }
@@ -1096,10 +1127,12 @@ function setUnit(unit) {
 }
 
 function updateUnitToggle() {
-  const oBtn = document.getElementById('unit-ofe-btn');
-  const dBtn = document.getElementById('unit-def-btn');
-  oBtn.className = 'unit-btn' + (activeUnit === 'OFE' ? ' active-ofe' : '');
-  dBtn.className = 'unit-btn' + (activeUnit === 'DEF' ? ' active-def' : '');
+  document.getElementById('unit-ofe-btn').className =
+    'unit-btn' + (activeUnit === 'OFE' ? ' active-ofe' : '');
+  document.getElementById('unit-def-btn').className =
+    'unit-btn' + (activeUnit === 'DEF' ? ' active-def' : '');
+  document.getElementById('unit-st-btn').className =
+    'unit-btn' + (activeUnit === 'ST'  ? ' active-st'  : '');
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1627,6 +1660,65 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => selectNewPlayQuarter(parseInt(btn.dataset.q)));
   });
 });
+
+/* ═══════════════════════════════════════════════════
+   FORMATION PICKER
+═══════════════════════════════════════════════════ */
+function openFormationPicker() {
+  const formations = getFormations();
+  const list       = document.getElementById('formation-picker-list');
+  const currentFormation = plays[currentPlayIndex]?.formation || '';
+
+  if (!formations.length) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;
+      color:var(--text-muted);font-size:13px">
+      Sin formaciones guardadas.<br>Crea una en Formaciones primero.
+    </div>`;
+  } else {
+    const units = ['OFE', 'DEF', 'ST'];
+    let html = '';
+    units.forEach(unit => {
+      const group = formations.filter(f => f.unit === unit);
+      if (!group.length) return;
+      const unitLabel = unit === 'OFE' ? 'Ofensiva' : unit === 'DEF' ? 'Defensiva' : 'Especiales';
+      html += `<div class="modal-unit-header">${unitLabel}</div>`;
+      group.forEach(f => {
+        const isActive = f.name.toLowerCase() === currentFormation.toLowerCase();
+        html += `
+          <div class="modal-player-row"
+               onclick="selectFormationFromPicker('${esc(f.name)}')"
+               style="${isActive ? 'background:rgba(0,200,150,.08);' : ''}">
+            <div style="flex:1;min-width:0">
+              <div class="modal-player-name">${esc(f.name)}</div>
+              <div class="modal-player-pos">${f.positions?.length || 0} posiciones</div>
+            </div>
+            ${isActive ? '<span class="modal-player-badge">✓ Activa</span>' : ''}
+          </div>`;
+      });
+    });
+    list.innerHTML = html;
+  }
+
+  document.getElementById('formation-picker-modal').classList.remove('hidden');
+}
+
+function closeFormationPicker() {
+  document.getElementById('formation-picker-modal').classList.add('hidden');
+}
+
+function formationPickerBgClick(e) {
+  if (e.target === document.getElementById('formation-picker-modal')) closeFormationPicker();
+}
+
+function selectFormationFromPicker(formationName) {
+  if (!plays[currentPlayIndex]) return;
+  saveCurrentState();
+  plays[currentPlayIndex].formation = formationName;
+  savePlays(currentGame.id, plays);
+  loadPlay(currentPlayIndex);
+  closeFormationPicker();
+  showToast(`Formación: ${formationName}`);
+}
 </script>
 
 </body>

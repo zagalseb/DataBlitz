@@ -342,7 +342,7 @@
         <div class="hub-app-info">
           <div class="hub-app-name">GAMETIME</div>
           <div class="hub-app-desc">
-            Captura de jugadas en vivo, análisis y export para HUDL.
+            Registro de jugadas en vivo, conteo de tendencias y export para HUDL.
           </div>
         </div>
         <div class="hub-app-arrow">→</div>
@@ -361,7 +361,7 @@
       </a>
 
       <!-- PLAYER PARTICIPATION -->
-      <div class="hub-app-card coming-soon">
+      <a class="hub-app-card available" href="Player Participation/index.html" id="card-pp">
         <div class="hub-app-icon pp">📋</div>
         <div class="hub-app-info">
           <div class="hub-app-name">PLAYER PARTICIPATION</div>
@@ -369,8 +369,8 @@
             Snaps, grading y análisis de participación por jugador.
           </div>
         </div>
-        <span class="hub-app-badge">Próximamente</span>
-      </div>
+        <div class="hub-app-arrow">→</div>
+      </a>
 
     </div>
 
@@ -467,22 +467,48 @@ document.addEventListener('DOMContentLoaded', () => {
       `Hola, ${cfg.name} 👋`;
   }
 
-  // Hover dinámico en card de GAMETIME
+  // ── Acceso por productos ──────────────
+  const products = TeamConfig.getTeamProducts(code);
+
+  function applyProductAccess(cardId, productKey) {
+    const el = document.getElementById(cardId);
+    if (!el) return;
+    if (!products.includes(productKey)) {
+      el.removeAttribute('href');
+      el.style.opacity       = '.35';
+      el.style.pointerEvents = 'none';
+      const arrow = el.querySelector('.hub-app-arrow');
+      if (arrow) {
+        const badge = document.createElement('span');
+        badge.className   = 'hub-app-badge';
+        badge.textContent = 'PRÓX';
+        arrow.replaceWith(badge);
+      }
+    }
+  }
+
+  applyProductAccess('card-gametime', 'gametime');
+  applyProductAccess('card-playbook', 'gametime'); // playbook es parte del producto gametime
+  applyProductAccess('card-pp', 'pp');
+
+  // Hover dinámico (solo cards habilitadas)
   const card = document.getElementById('card-gametime');
-  card.addEventListener('mouseenter', () => {
-    card.style.borderColor = cfg.color;
-  });
-  card.addEventListener('mouseleave', () => {
-    card.style.borderColor = '';
-  });
+  if (products.includes('gametime')) {
+    card.addEventListener('mouseenter', () => { card.style.borderColor = cfg.color; });
+    card.addEventListener('mouseleave', () => { card.style.borderColor = ''; });
+  }
 
   const cardPlaybook = document.getElementById('card-playbook');
-  cardPlaybook.addEventListener('mouseenter', () => {
-    cardPlaybook.style.borderColor = cfg.color;
-  });
-  cardPlaybook.addEventListener('mouseleave', () => {
-    cardPlaybook.style.borderColor = '';
-  });
+  if (products.includes('gametime')) {
+    cardPlaybook.addEventListener('mouseenter', () => { cardPlaybook.style.borderColor = cfg.color; });
+    cardPlaybook.addEventListener('mouseleave', () => { cardPlaybook.style.borderColor = ''; });
+  }
+
+  const cardPP = document.getElementById('card-pp');
+  if (products.includes('pp')) {
+    cardPP.addEventListener('mouseenter', () => { cardPP.style.borderColor = cfg.color; });
+    cardPP.addEventListener('mouseleave', () => { cardPP.style.borderColor = ''; });
+  }
 
   // ── Logout ────────────────────────────
   document.getElementById('btn-logout').addEventListener('click', () => {

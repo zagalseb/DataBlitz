@@ -54,12 +54,14 @@ const GameManager = (() => {
       drives:            State.drives,
       opponentPlays:     State.opponentPlays,
       possessionMode:    State.possessionMode,
+      stRole:            State.stRole,
     };
   }
 
   // ── Restore State from saved data ─────
   function _restoreState(saved) {
     Object.assign(State, saved);
+    State.stRole = saved.stRole ?? 'kicking';
   }
 
   // ── Auto-save current game ────────────
@@ -115,7 +117,7 @@ const GameManager = (() => {
         history: [], currentDrive: 1,
         currentDriveStart: 0, drives: [],
         opponentPlays: [], possessionMode: 'own',
-        historyFilter: 'all',
+        stRole: 'kicking', historyFilter: 'all',
       });
       renderAll();
       renderHistory();
@@ -151,7 +153,7 @@ const GameManager = (() => {
           history:           [], currentDrive: 1,
           currentDriveStart: 0, drives: [],
           opponentPlays:     [], possessionMode: 'own',
-          historyFilter:     'all',
+          stRole:            'kicking', historyFilter: 'all',
         });
       }
       renderAll();

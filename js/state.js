@@ -65,6 +65,7 @@ const State = {
 
   // Possession mode
   possessionMode: 'own',  // 'own' | 'opp' | 'st'
+  stRole: 'kicking',      // 'kicking' | 'return'
   opponentPlays:  [],
 
   // History filter

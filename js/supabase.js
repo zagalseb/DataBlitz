@@ -33,9 +33,10 @@ const SupabaseDB = (() => {
       const err = await res.text();
       throw new Error(`Supabase error ${res.status}: ${err}`);
     }
-    // 204 No Content (DELETE / upserts sin return)
-    if (res.status === 204) return null;
-    return res.json();
+    // Sin body (204 No Content o respuesta vacía)
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return null; }
   }
 
   // ══════════════════════════════════════════════════════════════

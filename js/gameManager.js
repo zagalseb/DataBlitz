@@ -82,6 +82,11 @@ const GameManager = (() => {
     games[idx].state     = _serializeState();
 
     _saveGames(games);
+
+    const _tc = TeamConfig.getActiveTeam();
+    if (_tc && typeof SupabaseDB !== 'undefined') {
+      SupabaseDB.sync(_tc).catch(console.warn);
+    }
   }
 
   // ── Create new game ───────────────────

@@ -307,6 +307,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/teamConfig.js"></script>
+<script src="js/supabase.js"></script>
 <script>
 'use strict';
 
@@ -512,6 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
   ).join('');
 
   renderPage();
+
+  const teamCode = TeamConfig.getActiveTeam();
+  SupabaseDB.sync(teamCode).then(r => SupabaseDB.showSyncStatus(r));
 
   document.getElementById('btn-new-game').addEventListener('click', openModal);
   document.getElementById('modal-close').addEventListener('click', closeModal);

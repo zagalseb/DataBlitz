@@ -23,7 +23,10 @@ const SupabaseDB = (() => {
 
   // ── Base fetch helper ─────────────────────────────────────────
   async function _req(path, options = {}) {
-    const res = await fetch(`${URL}/rest/v1/${path}`, {
+    // Pasar apikey como query param además de header (fix CORS en GitHub Pages)
+    const separator = path.includes('?') ? '&' : '?';
+    const url = `${URL}/rest/v1/${path}${separator}apikey=${ANON_KEY}`;
+    const res = await fetch(url, {
       headers: { ...HEADERS, ...(options.headers || {}) },
       ...options,
     });

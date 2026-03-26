@@ -240,7 +240,7 @@ function showError(msg) {
 
 const ADMIN_CODE = 'S2YB-MY95GA-J4N22'; 
 
-function doLogin() {
+async function doLogin() {
   const code = document.getElementById('login-code').value.trim().toUpperCase();
 
   if (!code) {
@@ -252,6 +252,45 @@ function doLogin() {
   if (code === ADMIN_CODE) {
     window.location.href = 'admin.html';
     return;
+  }
+
+  // Si no existe localmente, buscar en Supabase
+  if (!TeamConfig.teamExists(code)) {
+    const SUPABASE_URL = 'https://jaavutcczjshpxdoylwy.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
+
+    // Mostrar loading
+    const btn = document.getElementById('btn-login');
+    btn.textContent = 'Verificando...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${ANON_KEY}`,
+        { headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` } }
+      );
+      const rows = await res.json();
+      if (!rows || rows.length === 0) {
+        showError('Código inválido. Verifica con tu analista.');
+        btn.textContent = 'Entrar';
+        btn.disabled = false;
+        return;
+      }
+      // Registrar equipo localmente con los datos de Supabase
+      TeamConfig.registerTeam(code, ['gametime', 'pp']);
+      // Restaurar config si existe en Supabase
+      if (rows[0].config_json) {
+        localStorage.setItem(`${code}:playsync_team_config`, JSON.stringify(rows[0].config_json));
+      }
+    } catch (err) {
+      showError('Sin conexión. Intenta de nuevo.');
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+      return;
+    }
+
+    btn.textContent = 'Entrar';
+    btn.disabled = false;
   }
 
   // Código de equipo normal

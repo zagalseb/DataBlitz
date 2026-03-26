@@ -339,6 +339,11 @@
         <div class="quick-card-label">Reporte</div>
         <div class="quick-card-stat" id="stat-report">—</div>
       </a>
+      <a class="quick-card" href="#" onclick="openGradeConfig();return false">
+        <div class="quick-card-icon">⚙</div>
+        <div class="quick-card-label">Criterios</div>
+        <div class="quick-card-stat" id="stat-grade-cats">—</div>
+      </a>
     </div>
 
   </main>
@@ -575,6 +580,9 @@
       rosterCount === 1 ? '1 jugador' : `${rosterCount} jugadores`;
     document.getElementById('stat-formations').textContent =
       formationCount === 1 ? '1 template' : `${formationCount} templates`;
+    const gradeCatCount = getGradeCats().length;
+    document.getElementById('stat-grade-cats').textContent =
+      gradeCatCount === 1 ? '1 criterio' : `${gradeCatCount} criterios`;
 
     // Report stat: last game play count
     const games = getGames();
@@ -882,7 +890,78 @@
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  /* ─────────────────────────────────────────────
+     GRADE CONFIG MODAL
+  ───────────────────────────────────────────── */
+  let _editingCats = [];
+
+  function openGradeConfig() {
+    _editingCats = getGradeCats().map(c => ({...c}));
+    renderGradeCatsList(_editingCats);
+    document.getElementById('modal-grade-config').classList.remove('hidden');
+  }
+  function closeGradeConfig() {
+    document.getElementById('modal-grade-config').classList.add('hidden');
+  }
+  function gradeConfigBgClick(e) {
+    if (e.target === document.getElementById('modal-grade-config')) closeGradeConfig();
+  }
+  function renderGradeCatsList(cats) {
+    document.getElementById('grade-cats-list').innerHTML = cats.map((c, i) => `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--text-muted);min-width:16px">${i+1}</span>
+        <input type="text" value="${esc(c.label)}" maxlength="20"
+               style="flex:1;padding:6px 10px;background:var(--bg-card);
+                      border:1px solid var(--border);border-radius:var(--radius-sm);
+                      color:var(--text-primary);font-size:13px"
+               oninput="updateGradeCatLabel(${i}, this.value)">
+        <button class="btn btn-ghost btn-sm" onclick="removeGradeCat(${i})"
+                style="width:30px;height:30px;padding:0" ${cats.length <= 1 ? 'disabled' : ''}>✕</button>
+      </div>`).join('');
+  }
+  function updateGradeCatLabel(i, val) { _editingCats[i].label = val; }
+  function removeGradeCat(i) {
+    if (_editingCats.length <= 1) return;
+    _editingCats.splice(i, 1);
+    renderGradeCatsList(_editingCats);
+  }
+  function addGradeCat() {
+    if (_editingCats.length >= 8) { showToast('Máximo 8 criterios'); return; }
+    _editingCats.push({ key: 'cat_' + Date.now(), label: 'Nuevo' });
+    renderGradeCatsList(_editingCats);
+  }
+  function resetGradeCatsUI() {
+    _editingCats = DEFAULT_GRADE_CATS.map(c => ({...c}));
+    renderGradeCatsList(_editingCats);
+  }
+  function saveGradeConfig() {
+    const valid = _editingCats.filter(c => c.label.trim());
+    if (!valid.length) { showToast('Al menos 1 criterio requerido'); return; }
+    saveGradeCats(valid);
+    closeGradeConfig();
+    document.getElementById('stat-grade-cats').textContent = valid.length + ' criterios';
+    showToast('Criterios guardados ✓');
+  }
   </script>
+
+  <!-- ══════════════════════════════════
+       MODAL — CRITERIOS DE CALIFICACIÓN
+  ══════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-grade-config" onclick="gradeConfigBgClick(event)">
+    <div class="modal-box" style="max-width:380px">
+      <div class="modal-title" style="margin-bottom:1rem">Criterios de calificación</div>
+      <div id="grade-cats-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem"></div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem">
+        <button class="btn btn-ghost btn-sm" onclick="addGradeCat()">+ Agregar</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetGradeCatsUI()">Restaurar defaults</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeGradeConfig()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveGradeConfig()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

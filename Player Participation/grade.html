@@ -268,6 +268,28 @@
     .avg-neg  { color: var(--danger); }
     .avg-zero { color: var(--text-muted); }
 
+    .chip-nav-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 6px 12px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .chip-nav-btn {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-item); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 18px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity .15s;
+    }
+    .chip-nav-btn:active { opacity: .6; }
+    .chip-nav-counter {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted); min-width: 40px; text-align: center;
+    }
+
     /* Bottom nav buttons */
     .panel-right-footer {
       flex-shrink: 0;
@@ -436,6 +458,13 @@
         <button class="unit-btn" id="unit-def-btn" onclick="setUnit('DEF')">DEF</button>
         <button class="unit-btn" id="unit-st-btn"  onclick="setUnit('ST')">ST</button>
       </div>
+      <select id="group-filter" onchange="setGroupFilter(this.value)"
+              style="font-size:11px;font-weight:700;padding:4px 6px;
+                     background:var(--bg-card);border:1px solid var(--border);
+                     border-radius:var(--radius-sm);color:var(--text-muted);
+                     max-width:90px;flex-shrink:0">
+        <option value="all">Todos</option>
+      </select>
       <div class="play-nav-btns">
         <button class="play-nav-btn" id="btn-prev" onclick="prevPlay()" title="Jugada anterior" disabled>‹</button>
         <button class="play-nav-btn" id="btn-next" onclick="nextPlay()" title="Siguiente jugada" disabled>›</button>
@@ -482,6 +511,12 @@
 
   <!-- ─── RIGHT PANEL ─── -->
   <div class="panel-right" id="panel-right">
+
+    <div class="chip-nav-bar" id="chip-nav-bar">
+      <button class="chip-nav-btn" onclick="prevChip()" title="Posición anterior">‹</button>
+      <span class="chip-nav-counter" id="chip-nav-counter">— / —</span>
+      <button class="chip-nav-btn" onclick="nextChip()" title="Siguiente posición">›</button>
+    </div>
 
     <div class="right-panel-body" id="right-panel-body">
       <!-- Rendered by renderRightPanel() -->
@@ -707,6 +742,7 @@ let currentGrades    = {};   // { playerId: { asignacion, ejecucion, decision, i
 let selectedChipId   = null;
 let isMoveMode       = false;
 let activeUnit       = 'OFE';
+let activeGroupFilter = 'all';
 let openModalPosId   = null; // positionId being assigned
 
 // Swipe
@@ -831,9 +867,17 @@ function loadPlay(index) {
   // Update UI
   renderPlayHeader();
   renderPlayDataBar(play, prevFormation);
-  renderField();
+  populateGroupFilter();
   selectedChipId = null;
+  const filteredForNav = getNavPositions();
+  if (filteredForNav.length) {
+    selectedChipId = filteredForNav[0].id;
+  } else if (currentPositions.length) {
+    selectedChipId = currentPositions[0].id;
+  }
+  renderField();
   renderRightPanel();
+  renderChipNavButtons();
   updateNavButtons();
   updateUnitToggle();
 
@@ -984,6 +1028,12 @@ function renderField() {
       chip.classList.add('dimmed');
     }
 
+    // Dim chips outside the active group filter
+    if (activeGroupFilter !== 'all' && !isPositionInGroup(pos.label, activeGroupFilter)) {
+      chip.classList.add('dimmed');
+      chip.style.pointerEvents = 'none';
+    }
+
     if (isMoveMode) chip.classList.add('move-mode');
 
     // Content
@@ -1118,6 +1168,116 @@ function attachDragEvents(chip, pos) {
 /* ═══════════════════════════════════════════════════
    UNIT TOGGLE
 ═══════════════════════════════════════════════════ */
+function getSortedPositions() {
+  return [...currentPositions].sort((a, b) => {
+    if (Math.abs(a.x - b.x) < 1) return a.y - b.y;
+    return a.x - b.x;
+  });
+}
+
+function getNavPositions() {
+  const sorted = getSortedPositions();
+  if (activeGroupFilter === 'all') return sorted;
+  return sorted.filter(p => isPositionInGroup(p.label, activeGroupFilter));
+}
+
+function prevChip() {
+  const nav = getNavPositions();
+  if (!nav.length) return;
+  const idx = nav.findIndex(p => p.id === selectedChipId);
+  selectedChipId = nav[idx <= 0 ? nav.length - 1 : idx - 1].id;
+  renderField();
+  renderRightPanel();
+  renderChipNavButtons();
+}
+
+function nextChip() {
+  const nav = getNavPositions();
+  if (!nav.length) return;
+  const idx = nav.findIndex(p => p.id === selectedChipId);
+  selectedChipId = nav[idx < 0 || idx >= nav.length - 1 ? 0 : idx + 1].id;
+  renderField();
+  renderRightPanel();
+  renderChipNavButtons();
+}
+
+function renderChipNavButtons() {
+  const nav = getNavPositions();
+  const idx = nav.findIndex(p => p.id === selectedChipId);
+  const el  = document.getElementById('chip-nav-counter');
+  if (el) el.textContent = nav.length ? `${Math.max(idx + 1, 1)} / ${nav.length}` : '— / —';
+}
+
+function setGroupFilter(val) {
+  activeGroupFilter = val;
+  const nav = getNavPositions();
+  if (nav.length && !nav.find(p => p.id === selectedChipId)) {
+    selectedChipId = nav[0].id;
+  }
+  renderField();
+  renderRightPanel();
+  renderChipNavButtons();
+}
+
+function isPositionInGroup(label, group) {
+  const groupMap = {
+    'OL': ['OL-LT','OL-LG','OL-C','OL-RG','OL-RT','C'],
+    'WR': ['WR-X','WR-Z','WR-Y','WR-L2','WR-R2','SLOT', "WR-F"],
+    'QB': ['QB'],
+    'RB': ['RB','FB','H-Back', "HB"],
+    'TE': ['TE'],
+    'DL': ['DE','DT','NT', "LE", "RE"],
+    'LB': ['MLB','WILL','SAM','LB','ILB','OLB', "Buck"],
+    'DB': ['CB','FS','SS','NB','S'],
+  };
+  const members = groupMap[group] || [];
+  const up = label.toUpperCase();
+  return members.some(m => up.includes(m.toUpperCase()) || m.toUpperCase().includes(up));
+}
+
+function populateGroupFilter() {
+  const sel = document.getElementById('group-filter');
+  if (!sel) return;
+
+  const labels = currentPositions.map(p => p.label);
+  const groups = new Set();
+
+  const groupMap = {
+    'OL': ['OL-LT','OL-LG','OL-C','OL-RG','OL-RT','C'],
+    'WR': ['WR-X','WR-Z','WR-Y','WR-L2','WR-R2','SLOT'],
+    'QB': ['QB'],
+    'RB': ['RB','FB','H-Back'],
+    'TE': ['TE'],
+    'DL': ['DE','DT','NT'],
+    'LB': ['MLB','WILL','SAM','LB','ILB','OLB'],
+    'DB': ['CB','FS','SS','NB','S'],
+  };
+
+  labels.forEach(label => {
+    for (const [group, members] of Object.entries(groupMap)) {
+      if (members.some(m =>
+        label.toUpperCase() === m.toUpperCase() ||
+        label.toUpperCase().startsWith(m.toUpperCase())
+      )) {
+        groups.add(group);
+      }
+    }
+  });
+
+  const prevValue = activeGroupFilter;
+  sel.innerHTML = '<option value="all">Todos</option>' +
+    [...groups].sort().map(g => `<option value="${g}">${g}</option>`).join('');
+
+  if (prevValue !== 'all' && groups.has(prevValue)) {
+    sel.value = prevValue;
+  } else if (prevValue !== 'all' && !groups.has(prevValue)) {
+    activeGroupFilter = 'all';
+    sel.value = 'all';
+  } else {
+    sel.value = 'all';
+  }
+}
+
 function setUnit(unit) {
   activeUnit = unit;
   updateUnitToggle();
@@ -1187,6 +1347,7 @@ function renderRightPanel() {
         <div class="rp-empty-icon">🏈</div>
         <div class="rp-empty-text">Sin jugadas en este partido</div>
       </div>`;
+    renderChipNavButtons();
     return;
   }
 
@@ -1196,6 +1357,7 @@ function renderRightPanel() {
         <div class="rp-empty-icon">🏈</div>
         <div class="rp-empty-text">Selecciona una posición<br>en el campo para ver<br>o asignar un jugador</div>
       </div>`;
+    renderChipNavButtons();
     return;
   }
 
@@ -1211,18 +1373,13 @@ function renderRightPanel() {
         <button class="btn btn-primary w-full" onclick="openPlayerModal('${selectedChipId}')">Asignar jugador</button>
         <button class="btn btn-danger w-full" style="margin-top:8px" onclick="deletePosition('${selectedChipId}')">🗑 Eliminar posición</button>
       </div>`;
+    renderChipNavButtons();
     return;
   }
 
   // Grades
   const grades = currentGrades[playerId] || {};
-  const cats = [
-    { key: 'asignacion', label: 'Asignación' },
-    { key: 'ejecucion',  label: 'Ejecución'  },
-    { key: 'decision',   label: 'Decisión'   },
-    { key: 'impacto',    label: 'Impacto'    },
-    { key: 'disciplina', label: 'Disciplina' },
-  ];
+  const cats = getGradeCats();
 
   const gradeRowsHtml = cats.map(cat => {
     const val = grades[cat.key];
@@ -1271,14 +1428,19 @@ function renderRightPanel() {
         <span>${esc(pos ? pos.label : '')}</span>
         <span style="opacity:.4">·</span>
         <span>${esc(player.position || '')}</span>
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto"
-          onclick="unassignPlayer('${selectedChipId}')">✕ Desasignar</button>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <button class="btn btn-ghost btn-sm"
+            onclick="openPlayerModal('${selectedChipId}')">⇄ Cambiar</button>
+          <button class="btn btn-ghost btn-sm"
+            onclick="unassignPlayer('${selectedChipId}')">✕ Desasignar</button>
+        </div>
       </div>
       <div class="grade-section">
         ${gradeRowsHtml}
       </div>
       ${avgHtml}
     </div>`;
+  renderChipNavButtons();
 }
 
 /* ═══════════════════════════════════════════════════

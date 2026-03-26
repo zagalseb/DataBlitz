@@ -454,6 +454,34 @@ function initDefaultFormations() {
 }
 
 /* ────────────────────────────────────────────
+   MODULE: GRADE CONFIG
+──────────────────────────────────────────── */
+const DEFAULT_GRADE_CATS = [
+  { key: 'asignacion', label: 'Asignación' },
+  { key: 'ejecucion',  label: 'Ejecución'  },
+  { key: 'decision',   label: 'Decisión'   },
+  { key: 'impacto',    label: 'Impacto'    },
+  { key: 'disciplina', label: 'Disciplina' },
+];
+
+function getGradeCats() {
+  try {
+    const raw = localStorage.getItem(TeamConfig.key('pp_grade_cats'));
+    if (!raw) return DEFAULT_GRADE_CATS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_GRADE_CATS;
+  } catch { return DEFAULT_GRADE_CATS; }
+}
+
+function saveGradeCats(cats) {
+  localStorage.setItem(TeamConfig.key('pp_grade_cats'), JSON.stringify(cats));
+}
+
+function resetGradeCats() {
+  localStorage.removeItem(TeamConfig.key('pp_grade_cats'));
+}
+
+/* ────────────────────────────────────────────
    PLAYSYNC CSV PARSER
 ──────────────────────────────────────────── */
 

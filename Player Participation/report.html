@@ -691,14 +691,8 @@
     <div class="report-table-wrap">
       <table class="report-table" id="grades-table">
         <thead>
-          <tr>
-            <th onclick="sortGrades('name')"     id="gth-name">Jugador <span class="sort-icon" id="gsi-name"></span></th>
-            <th onclick="sortGrades('asig')"     id="gth-asig">Asig <span class="sort-icon" id="gsi-asig"></span></th>
-            <th onclick="sortGrades('ejec')"     id="gth-ejec">Ejec <span class="sort-icon" id="gsi-ejec"></span></th>
-            <th onclick="sortGrades('decis')"    id="gth-decis">Decis <span class="sort-icon" id="gsi-decis"></span></th>
-            <th onclick="sortGrades('impacto')"  id="gth-impacto">Impacto <span class="sort-icon" id="gsi-impacto"></span></th>
-            <th onclick="sortGrades('disc')"     id="gth-disc">Disc <span class="sort-icon" id="gsi-disc"></span></th>
-            <th onclick="sortGrades('total')"    id="gth-total">Total <span class="sort-icon" id="gsi-total"></span></th>
+          <tr id="grades-thead-row">
+            <!-- Populated dynamically by renderGradesTable() -->
           </tr>
         </thead>
         <tbody id="grades-tbody">
@@ -757,6 +751,7 @@ window.onload = () => {
     return;
   }
   TeamConfig.apply();
+  GRADE_CATS = getGradeCats(); // array de { key, label }
 
   roster = getRoster();
 
@@ -976,7 +971,7 @@ function getFilteredPlays() {
 /* ═══════════════════════════════════════════════════
    COMPUTE PLAYER STATS
 ═══════════════════════════════════════════════════ */
-const GRADE_CATS = ['asignacion','ejecucion','decision','impacto','disciplina'];
+let GRADE_CATS; // se inicializa en onload
 
 function computePlayerStats() {
   const filtered = getFilteredPlays();
@@ -989,7 +984,7 @@ function computePlayerStats() {
       if (!statsMap[playerId]) {
         statsMap[playerId] = {
           snaps: 0,
-          gradeVals: { asignacion:[], ejecucion:[], decision:[], impacto:[], disciplina:[] },
+          gradeVals: Object.fromEntries(GRADE_CATS.map(c => [c.key, []])),
         };
       }
       statsMap[playerId].snaps++;
@@ -998,8 +993,8 @@ function computePlayerStats() {
       if (play.grades && play.grades[playerId]) {
         const g = play.grades[playerId];
         for (const cat of GRADE_CATS) {
-          if (g[cat] !== undefined && g[cat] !== null) {
-            statsMap[playerId].gradeVals[cat].push(g[cat]);
+          if (g[cat.key] !== undefined && g[cat.key] !== null) {
+            statsMap[playerId].gradeVals[cat.key].push(g[cat.key]);
           }
         }
       }
@@ -1019,25 +1014,21 @@ function computePlayerStats() {
     const avgs = {};
     let allVals = [];
     for (const cat of GRADE_CATS) {
-      const vals = st.gradeVals[cat];
-      avgs[cat] = vals.length > 0 ? avg(vals) : null;
+      const vals = st.gradeVals[cat.key];
+      avgs[cat.key] = vals.length > 0 ? avg(vals) : null;
       allVals = allVals.concat(vals);
     }
     const avgTotal = allVals.length > 0 ? avg(allVals) : null;
 
     result.push({
-      id:             player.id,
-      number:         player.number,
-      name:           player.name,
-      position:       player.position || '',
-      unit:           player.unit || '',
-      snaps:          st.snaps,
+      id:               player.id,
+      number:           player.number,
+      name:             player.name,
+      position:         player.position || '',
+      unit:             player.unit || '',
+      snaps:            st.snaps,
       participationPct: Math.round((st.snaps / totalPlays) * 100),
-      avgAsig:    avgs.asignacion,
-      avgEjec:    avgs.ejecucion,
-      avgDecis:   avgs.decision,
-      avgImpacto: avgs.impacto,
-      avgDisc:    avgs.disciplina,
+      catAvgs:          GRADE_CATS.map(c => avgs[c.key] ?? null),
       avgTotal,
     });
   }
@@ -1069,8 +1060,8 @@ function computeSummary(stats) {
       if (!playerId || !play.grades[playerId]) continue;
       const g = play.grades[playerId];
       for (const cat of GRADE_CATS) {
-        if (g[cat] !== undefined && g[cat] !== null) {
-          allGradeVals.push(g[cat]);
+        if (g[cat.key] !== undefined && g[cat.key] !== null) {
+          allGradeVals.push(g[cat.key]);
         }
       }
     }
@@ -1214,12 +1205,12 @@ function buildPlayerDetailRow(p, totalPlays, printOnly = false) {
 
   // Per-play grade rows
   let rowsHtml = '';
-  const catAvgs = { asignacion:[], ejecucion:[], decision:[], impacto:[], disciplina:[] };
+  const catAvgs = Object.fromEntries(GRADE_CATS.map(c => [c.key, []]));
 
   for (const { play, origIdx } of playerPlays) {
     const g = (play.grades && play.grades[p.id]) ? play.grades[p.id] : {};
     for (const cat of GRADE_CATS) {
-      if (g[cat] !== undefined && g[cat] !== null) catAvgs[cat].push(g[cat]);
+      if (g[cat.key] !== undefined && g[cat.key] !== null) catAvgs[cat.key].push(g[cat.key]);
     }
 
     const playNum = play.playNumber || (origIdx + 1);
@@ -1227,7 +1218,7 @@ function buildPlayerDetailRow(p, totalPlays, printOnly = false) {
     const dn      = play.down && play.toFirst ? `${play.down}&${play.toFirst}` : (play.down || '—');
     const form    = play.formation ? esc(play.formation) : '—';
     const catCells = GRADE_CATS.map(cat => {
-      const v = g[cat];
+      const v = g[cat.key];
       if (v === undefined || v === null) return `<td style="color:var(--text-muted)">—</td>`;
       const sign = v > 0 ? '+' : '';
       const cls  = v > 0 ? 'avg-pos' : v < 0 ? 'avg-neg' : 'avg-zero';
@@ -1246,7 +1237,7 @@ function buildPlayerDetailRow(p, totalPlays, printOnly = false) {
 
   // Average row
   const avgCells = GRADE_CATS.map(cat => {
-    const vals = catAvgs[cat];
+    const vals = catAvgs[cat.key];
     if (!vals.length) return `<td style="color:var(--text-muted)">—</td>`;
     const a = avg(vals);
     const sign = a > 0 ? '+' : '';
@@ -1254,6 +1245,7 @@ function buildPlayerDetailRow(p, totalPlays, printOnly = false) {
     return `<td class="${cls}">${sign}${a.toFixed(1)}</td>`;
   }).join('');
 
+  const catThs = GRADE_CATS.map(c => `<th>${esc(c.label)}</th>`).join('');
   const trClass = printOnly ? 'print-detail' : 'detail-row';
   return `
     <tr class="${trClass}">
@@ -1267,7 +1259,7 @@ function buildPlayerDetailRow(p, totalPlays, printOnly = false) {
               <thead>
                 <tr>
                   <th>#</th><th>Q</th><th>Down</th><th>Formation</th>
-                  <th>Asig</th><th>Ejec</th><th>Decis</th><th>Imp</th><th>Disc</th>
+                  ${catThs}
                 </tr>
               </thead>
               <tbody>
@@ -1295,20 +1287,31 @@ function sortGrades(col) {
 
 function renderGradesTable(stats) {
   if (!stats) stats = computePlayerStats();
-  updateSortIcons('gsi', gradesSortCol, gradesSortDir,
-    ['name','asig','ejec','decis','impacto','disc','total']);
+
+  // Build dynamic thead
+  const catHeaders = GRADE_CATS.map((c, i) =>
+    `<th onclick="sortGrades('cat_${i}')">${esc(c.label)} <span class="sort-icon" id="gsi-cat-${i}"></span></th>`
+  ).join('');
+  document.getElementById('grades-thead-row').innerHTML =
+    `<th onclick="sortGrades('name')">Jugador <span class="sort-icon" id="gsi-name"></span></th>` +
+    catHeaders +
+    `<th onclick="sortGrades('total')">Total <span class="sort-icon" id="gsi-total"></span></th>`;
+
+  const catIds = ['name', ...GRADE_CATS.map((_, i) => `cat_${i}`), 'total'];
+  updateSortIcons('gsi', gradesSortCol, gradesSortDir, catIds);
 
   const sorted = [...stats].sort((a, b) => {
-    const map = {
-      name:    [a.name, b.name],
-      asig:    [a.avgAsig    ?? -99, b.avgAsig    ?? -99],
-      ejec:    [a.avgEjec    ?? -99, b.avgEjec    ?? -99],
-      decis:   [a.avgDecis   ?? -99, b.avgDecis   ?? -99],
-      impacto: [a.avgImpacto ?? -99, b.avgImpacto ?? -99],
-      disc:    [a.avgDisc    ?? -99, b.avgDisc    ?? -99],
-      total:   [a.avgTotal   ?? -99, b.avgTotal   ?? -99],
-    };
-    const [av, bv] = map[gradesSortCol] ?? [a.avgTotal ?? -99, b.avgTotal ?? -99];
+    let av, bv;
+    if (gradesSortCol === 'name') {
+      av = a.name; bv = b.name;
+    } else if (gradesSortCol === 'total') {
+      av = a.avgTotal ?? -99; bv = b.avgTotal ?? -99;
+    } else if (gradesSortCol.startsWith('cat_')) {
+      const i = parseInt(gradesSortCol.replace('cat_', ''));
+      av = a.catAvgs?.[i] ?? -99; bv = b.catAvgs?.[i] ?? -99;
+    } else {
+      av = a.avgTotal ?? -99; bv = b.avgTotal ?? -99;
+    }
     if (typeof av === 'string') {
       return gradesSortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
     }
@@ -1317,14 +1320,12 @@ function renderGradesTable(stats) {
 
   if (!sorted.length) {
     document.getElementById('grades-tbody').innerHTML =
-      `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px">Sin datos</td></tr>`;
+      `<tr><td colspan="${GRADE_CATS.length + 2}" style="text-align:center;color:var(--text-muted);padding:20px">Sin datos</td></tr>`;
     return;
   }
 
   document.getElementById('grades-tbody').innerHTML = sorted.map(p => {
-    const cells = [
-      p.avgAsig, p.avgEjec, p.avgDecis, p.avgImpacto, p.avgDisc
-    ].map(v => gradeCellHtml(v)).join('');
+    const cells = (p.catAvgs || []).map(v => gradeCellHtml(v)).join('');
     const total = gradeCellHtml(p.avgTotal, true);
     return `
       <tr>
@@ -1408,7 +1409,7 @@ function renderTimeline() {
 function isPlayGraded(play) {
   if (!play.grades || !play.lineup) return false;
   return Object.values(play.lineup).some(pid => pid && play.grades[pid] &&
-    GRADE_CATS.some(cat => play.grades[pid][cat] !== undefined && play.grades[pid][cat] !== null));
+    GRADE_CATS.some(cat => play.grades[pid][cat.key] !== undefined && play.grades[pid][cat.key] !== null));
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1460,16 +1461,16 @@ function exportPDF() {
 function exportCSV() {
   document.getElementById('export-menu').style.display = 'none';
   const stats = computePlayerStats();
+  const catHeaders = GRADE_CATS.map(c => `Avg ${c.label}`);
   const rows  = [
     ['Jugador','#','Posición','Unidad','Snaps','%Part',
-     'Avg Asig','Avg Ejec','Avg Decis','Avg Impacto','Avg Disc','Avg Total'],
+     ...catHeaders, 'Avg Total'],
   ];
   for (const p of stats) {
     rows.push([
       p.name, p.number, p.position, p.unit,
       p.snaps, p.participationPct,
-      fmtCSV(p.avgAsig), fmtCSV(p.avgEjec), fmtCSV(p.avgDecis),
-      fmtCSV(p.avgImpacto), fmtCSV(p.avgDisc), fmtCSV(p.avgTotal),
+      ...(p.catAvgs || []).map(fmtCSV), fmtCSV(p.avgTotal),
     ]);
   }
   const csv  = rows.map(r => r.map(csvField).join(',')).join('\n');

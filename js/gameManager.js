@@ -198,6 +198,13 @@ const GameManager = (() => {
   function init() {
     _ready = true;
     window.addEventListener('pagehide', autosave);
+    window.addEventListener('online', () => {
+      const _tc = TeamConfig.getActiveTeam();
+      if (_tc && typeof SupabaseDB !== 'undefined') {
+        const games = _loadGames();
+        SupabaseDB.saveGames(_tc, games).catch(console.warn);
+      }
+    });
 
     if (!TeamConfig.requireTeam()) return;
     if (!TeamConfig.isConfigured()) {

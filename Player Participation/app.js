@@ -194,11 +194,13 @@ function getPlays(gameId) {
 function savePlays(gameId, plays) {
   ppSet(PP_KEYS.plays(gameId), plays);
   if (_ppSB() && _ppTeam()) {
-    // Subir todas las jugadas a Supabase en background
     const tc = _ppTeam();
-    plays.forEach((play, index) => {
-      SupabaseDB.upsertPPPlay(tc, gameId, index, play).catch(console.warn);
-    });
+    // Subir en secuencia para evitar condición de carrera
+    (async () => {
+      for (let i = 0; i < plays.length; i++) {
+        await SupabaseDB.upsertPPPlay(tc, gameId, i, plays[i]).catch(console.warn);
+      }
+    })();
   }
 }
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'datablitz-v1';
+const CACHE_NAME = 'datablitz-v3';
 
 const FILES_TO_CACHE = [
   '/DataBlitz/',
@@ -18,6 +18,7 @@ const FILES_TO_CACHE = [
   '/DataBlitz/js/state.js',
   '/DataBlitz/js/data.js',
   '/DataBlitz/js/teamConfig.js',
+  '/DataBlitz/js/supabase.js',
   '/DataBlitz/js/gameManager.js',
   '/DataBlitz/js/history.js',
   '/DataBlitz/js/drives.js',

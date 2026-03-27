@@ -512,10 +512,12 @@ function confirmNewGame() {
 
   const _tc2 = TeamConfig.getActiveTeam();
   if (_tc2 && typeof SupabaseDB !== 'undefined') {
-    SupabaseDB.sync(_tc2).catch(console.warn);
+    SupabaseDB.sync(_tc2).catch(console.warn).finally(() => {
+      window.location.href = 'game.html';
+    });
+  } else {
+    window.location.href = 'game.html';
   }
-
-  window.location.href = 'game.html';
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────

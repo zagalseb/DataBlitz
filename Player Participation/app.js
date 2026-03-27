@@ -5,6 +5,13 @@
 
 'use strict';
 
+function _ppSB() {
+  return typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline();
+}
+function _ppTeam() {
+  return TeamConfig.getActiveTeam();
+}
+
 /* ────────────────────────────────────────────
    CONSTANTS
 ──────────────────────────────────────────── */
@@ -74,12 +81,18 @@ function savePlayer({ id, number, name, position, unit }) {
     }
     return list;
   });
+  if (_ppSB() && _ppTeam()) {
+    SupabaseDB.syncRoster(_ppTeam(), getRoster()).catch(console.warn);
+  }
 }
 
 function deletePlayer(id) {
   ppUpdate(PP_KEYS.roster(), (roster) =>
     (roster ?? []).filter(p => p.id !== id)
   );
+  if (_ppSB()) {
+    SupabaseDB.deleteRosterPlayer(id).catch(console.warn);
+  }
 }
 
 /**
@@ -144,6 +157,10 @@ function saveGame({ id, name, date, opponent, status }) {
     }
     return list;
   });
+  if (_ppSB() && _ppTeam()) {
+    const g = getGame(id || '');
+    if (g) SupabaseDB.upsertPPGame(_ppTeam(), g).catch(console.warn);
+  }
 }
 
 function deleteGame(id) {
@@ -185,6 +202,12 @@ function updatePlay(gameId, playIndex, patch) {
     list[playIndex] = { ...list[playIndex], ...patch };
     return list;
   });
+  if (_ppSB() && _ppTeam()) {
+    const updatedPlay = getPlays(gameId)[playIndex];
+    if (updatedPlay) {
+      SupabaseDB.upsertPPPlay(_ppTeam(), gameId, playIndex, updatedPlay).catch(console.warn);
+    }
+  }
 }
 
 /* ────────────────────────────────────────────
@@ -219,6 +242,9 @@ function saveFormation({ id, name, unit, positions }) {
     }
     return list;
   });
+  if (_ppSB() && _ppTeam()) {
+    SupabaseDB.syncPPFormations(_ppTeam(), getFormations()).catch(console.warn);
+  }
 }
 
 function deleteFormation(id) {

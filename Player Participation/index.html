@@ -475,6 +475,7 @@
   <!-- ══════════════════════════════════
        SCRIPTS
   ══════════════════════════════════ -->
+  <script src="../js/supabase.js"></script>
   <script src="../js/teamConfig.js"></script>
   <script src="app.js"></script>
   <script>
@@ -496,8 +497,53 @@
     TeamConfig.apply();
     document.getElementById('team-name-sub').textContent = TeamConfig.get().name;
     document.getElementById('f-date').value = todayISO();
-    renderGameList();
-    updateQuickStats();
+    async function initWithSync() {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc && typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+        try {
+          // Pull roster
+          const remoteRoster = await SupabaseDB.loadRoster(tc);
+          if (remoteRoster.length > 0) {
+            localStorage.setItem(TeamConfig.key('pp_roster'), JSON.stringify(remoteRoster));
+          }
+
+          // Pull partidos PP
+          const remoteGames = await SupabaseDB.loadPPGames(tc);
+          if (remoteGames.length > 0) {
+            // Merge: local gana si tiene más datos (status activo)
+            const localGames = ppGet(PP_KEYS.games()) ?? [];
+            const map = new Map();
+            for (const g of remoteGames) map.set(g.id, g);
+            for (const g of localGames) map.set(g.id, g); // local sobreescribe
+            const merged = [...map.values()];
+            ppSet(PP_KEYS.games(), merged);
+          }
+
+          // Pull formaciones
+          const remoteForms = await SupabaseDB.loadPPFormations(tc);
+          if (remoteForms) {
+            const localForms = ppGet(PP_KEYS.formations()) ?? [];
+            // Conservar custom locales que no estén en remoto
+            const remoteIds = new Set(remoteForms.map(f => f.id));
+            const localCustom = localForms.filter(f => !f.isDefault && !remoteIds.has(f.id));
+            ppSet(PP_KEYS.formations(), [...remoteForms, ...localCustom]);
+          }
+        } catch (err) {
+          console.warn('[PP Sync] Pull failed:', err);
+        }
+      }
+      renderGameList();
+      updateQuickStats();
+    }
+
+    initWithSync();
+
+    window.addEventListener('online', () => {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc && typeof SupabaseDB !== 'undefined') {
+        initWithSync();
+      }
+    });
   });
 
   /* ─────────────────────────────────────────────
@@ -605,8 +651,26 @@
   /* ─────────────────────────────────────────────
      NAVIGATION
   ───────────────────────────────────────────── */
-  function openGame(id) {
+  async function openGame(id) {
     setCurrentGame(id);
+    // Pull jugadas desde Supabase antes de abrir
+    const tc = TeamConfig.getActiveTeam();
+    if (tc && typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+      try {
+        const remotePlays = await SupabaseDB.loadPPPlays(id);
+        if (remotePlays.length > 0) {
+          const localPlays = ppGet(PP_KEYS.plays(id)) ?? [];
+          // Remoto gana si tiene más jugadas calificadas
+          const remoteGraded = remotePlays.filter(p => Object.keys(p.grades || {}).length > 0).length;
+          const localGraded  = localPlays.filter(p => Object.keys(p.grades || {}).length > 0).length;
+          if (remoteGraded >= localGraded) {
+            ppSet(PP_KEYS.plays(id), remotePlays);
+          }
+        }
+      } catch (err) {
+        console.warn('[PP Sync] Plays pull failed:', err);
+      }
+    }
     location.href = `grade.html?game=${id}`;
   }
 

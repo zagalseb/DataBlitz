@@ -233,10 +233,225 @@ const SupabaseDB = (() => {
     }
   }
 
+  // ── Player Participation ──────────────────────────────────────
+
+  async function syncRoster(teamCode, players) {
+    if (!isOnline()) return;
+    // Upsert cada jugador
+    for (const p of players) {
+      const body = JSON.stringify({
+        id:        p.id,
+        team_code: teamCode,
+        number:    p.number || '',
+        name:      p.name,
+        position:  p.position || '',
+        unit:      p.unit || '',
+        updated_at: new Date().toISOString(),
+      });
+      const res = await fetch(
+        `${SB_URL}/rest/v1/pp_rosters?apikey=${SB_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+          },
+          body,
+        }
+      );
+      if (res.status === 409 || res.status === 400) {
+        await fetch(
+          `${SB_URL}/rest/v1/pp_rosters?id=eq.${p.id}&apikey=${SB_KEY}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`,
+              'Prefer': 'return=minimal',
+            },
+            body,
+          }
+        );
+      }
+    }
+  }
+
+  async function deleteRosterPlayer(playerId) {
+    if (!isOnline()) return;
+    await _req(`pp_rosters?id=eq.${playerId}`, { method: 'DELETE' });
+  }
+
+  async function loadRoster(teamCode) {
+    const rows = await _req(
+      `pp_rosters?team_code=eq.${teamCode}&order=number.asc&select=*`
+    );
+    return (rows || []).map(r => ({
+      id:       r.id,
+      number:   r.number,
+      name:     r.name,
+      position: r.position,
+      unit:     r.unit,
+    }));
+  }
+
+  async function upsertPPGame(teamCode, game) {
+    if (!isOnline()) return;
+    const body = JSON.stringify({
+      id:        game.id,
+      team_code: teamCode,
+      name:      game.name || '',
+      date:      game.date || '',
+      opponent:  game.opponent || '',
+      status:    game.status || 'active',
+      updated_at: new Date().toISOString(),
+    });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/pp_games?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/pp_games?id=eq.${game.id}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body,
+        }
+      );
+    }
+  }
+
+  async function loadPPGames(teamCode) {
+    const rows = await _req(
+      `pp_games?team_code=eq.${teamCode}&order=updated_at.desc&select=*`
+    );
+    return (rows || []).map(r => ({
+      id:       r.id,
+      name:     r.name,
+      date:     r.date,
+      opponent: r.opponent,
+      status:   r.status,
+    }));
+  }
+
+  async function upsertPPPlay(teamCode, gameId, playIndex, playData) {
+    if (!isOnline()) return;
+    const id = `${gameId}_${playIndex}`;
+    const body = JSON.stringify({
+      id,
+      game_id:    gameId,
+      team_code:  teamCode,
+      play_index: playIndex,
+      data_json:  playData,
+      updated_at: new Date().toISOString(),
+    });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/pp_plays?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/pp_plays?id=eq.${id}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body,
+        }
+      );
+    }
+  }
+
+  async function loadPPPlays(gameId) {
+    const rows = await _req(
+      `pp_plays?game_id=eq.${gameId}&order=play_index.asc&select=*`
+    );
+    return (rows || []).map(r => r.data_json);
+  }
+
+  async function syncPPFormations(teamCode, formations) {
+    if (!isOnline()) return;
+    const body = JSON.stringify({
+      team_code:  teamCode,
+      data_json:  formations,
+      updated_at: new Date().toISOString(),
+    });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/pp_formations?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/pp_formations?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body,
+        }
+      );
+    }
+  }
+
+  async function loadPPFormations(teamCode) {
+    const rows = await _req(
+      `pp_formations?team_code=eq.${teamCode}&select=data_json`
+    );
+    return rows?.[0]?.data_json || null;
+  }
+
   return {
     sync, upsertTeam,
     loadGames, saveGames, deleteGame,
     loadPlaybook, savePlaybook,
     showSyncStatus, isOnline,
+    // Player Participation
+    syncRoster, deleteRosterPlayer, loadRoster,
+    upsertPPGame, loadPPGames,
+    upsertPPPlay, loadPPPlays,
+    syncPPFormations, loadPPFormations,
   };
 })();

@@ -254,20 +254,18 @@ async function doLogin() {
     return;
   }
 
-  // Si no existe localmente, buscar en Supabase
   if (!TeamConfig.teamExists(code)) {
-    const SUPABASE_URL = 'https://jaavutcczjshpxdoylwy.supabase.co';
-    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
+    const SB_URL = 'https://jaavutcczjshpxdoylwy.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
 
-    // Mostrar loading
     const btn = document.getElementById('btn-login');
     btn.textContent = 'Verificando...';
     btn.disabled = true;
 
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${ANON_KEY}`,
-        { headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` } }
+        `${SB_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${SB_KEY}`,
+        { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
       );
       const rows = await res.json();
       if (!rows || rows.length === 0) {
@@ -276,10 +274,8 @@ async function doLogin() {
         btn.disabled = false;
         return;
       }
-      // Registrar equipo localmente con los datos de Supabase
       TeamConfig.registerTeam(code, ['gametime', 'pp']);
-      // Restaurar config si existe en Supabase
-      if (rows[0].config_json) {
+      if (rows[0].config_json?.configuredAt) {
         localStorage.setItem(`${code}:playsync_team_config`, JSON.stringify(rows[0].config_json));
       }
     } catch (err) {

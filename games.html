@@ -460,6 +460,11 @@ function renderPage() {
       if (!confirm(`¿Eliminar ${lbl}? No se puede deshacer.`)) return;
       const updated = games.filter(g => g.id !== id);
       saveGames(updated);
+      if (typeof SupabaseDB !== 'undefined') {
+        SupabaseDB.deleteGame(id).catch(console.warn);
+        const _tc3 = TeamConfig.getActiveTeam();
+        if (_tc3) SupabaseDB.sync(_tc3).catch(console.warn);
+      }
       if (getCurrentId() === id) {
         localStorage.removeItem(TeamConfig.key('playsync_current_game_id'));
       }
@@ -501,6 +506,11 @@ function confirmNewGame() {
   saveGames(games);
   localStorage.setItem(TeamConfig.key('playsync_current_game_id'), id);
 
+  const _tc2 = TeamConfig.getActiveTeam();
+  if (_tc2 && typeof SupabaseDB !== 'undefined') {
+    SupabaseDB.sync(_tc2).catch(console.warn);
+  }
+
   window.location.href = 'game.html';
 }
 
@@ -512,10 +522,12 @@ document.addEventListener('DOMContentLoaded', () => {
     `<option value="${w}">${isNaN(w) ? w : `Semana ${w}`}</option>`
   ).join('');
 
-  renderPage();
-
-  const teamCode = TeamConfig.getActiveTeam();
-  SupabaseDB.sync(teamCode).then(r => SupabaseDB.showSyncStatus(r));
+  const _tc = TeamConfig.getActiveTeam();
+  if (_tc && typeof SupabaseDB !== 'undefined') {
+    SupabaseDB.sync(_tc).then(() => renderPage());
+  } else {
+    renderPage();
+  }
 
   document.getElementById('btn-new-game').addEventListener('click', openModal);
   document.getElementById('modal-close').addEventListener('click', closeModal);

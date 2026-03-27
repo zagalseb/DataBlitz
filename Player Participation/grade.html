@@ -759,7 +759,7 @@ let touchStartY = 0;
 /* ═══════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   // Guard — redirigir si no hay equipo activo o no tiene acceso a PP
   if (!TeamConfig.requireTeam()) return;
   const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
@@ -778,6 +778,36 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!currentGame) {
     location.href = 'index.html';
     return;
+  }
+
+  const tc = TeamConfig.getActiveTeam();
+  if (tc && typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+    try {
+      const cacheKey = `pp_plays_last_pull_${currentGame.id}`;
+      const lastPull = parseInt(localStorage.getItem(cacheKey) || '0', 10);
+      const stale = Date.now() - lastPull > 2 * 60 * 1000; // 2 minutos
+
+      if (stale) {
+        const remotePlays = await SupabaseDB.loadPPPlays(currentGame.id);
+        if (remotePlays.length > 0) {
+          const localPlays = getPlays(currentGame.id);
+          const remoteGraded = remotePlays.filter(p =>
+            Object.keys(p.lineup || {}).length > 0 ||
+            Object.keys(p.grades || {}).length > 0
+          ).length;
+          const localGraded = localPlays.filter(p =>
+            Object.keys(p.lineup || {}).length > 0 ||
+            Object.keys(p.grades || {}).length > 0
+          ).length;
+          if (remoteGraded >= localGraded) {
+            ppSet(PP_KEYS.plays(currentGame.id), remotePlays);
+          }
+        }
+        localStorage.setItem(cacheKey, Date.now().toString());
+      }
+    } catch (err) {
+      console.warn('[PP grade] Plays pull failed:', err);
+    }
   }
 
   plays = getPlays(currentGame.id);

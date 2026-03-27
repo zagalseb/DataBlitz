@@ -39,18 +39,47 @@ const SupabaseDB = (() => {
     if (!isOnline()) return;
     const cfg = TeamConfig.get();
     if (!cfg) return;
-    await _req('teams?on_conflict=team_code', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({
-        team_code:   teamCode,
-        name:        cfg.name,
-        initials:    cfg.initials,
-        color:       cfg.color,
-        logo:        cfg.logo || null,
-        config_json: cfg,
-      }),
+
+    const body = JSON.stringify({
+      team_code:   teamCode,
+      name:        cfg.name,
+      initials:    cfg.initials,
+      color:       cfg.color,
+      logo:        cfg.logo || null,
+      config_json: cfg,
     });
+
+    // Intentar INSERT primero
+    const res = await fetch(
+      `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+
+    // 409 = ya existe, hacer PATCH
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body,
+        }
+      );
+    }
   }
 
   // ── Games ─────────────────────────────────────────────────────

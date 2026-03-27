@@ -103,26 +103,54 @@ const SupabaseDB = (() => {
   async function saveGames(teamCode, games) {
     if (!isOnline()) return;
     for (const g of games) {
-      await _req('games?on_conflict=id', {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({
-          id:        g.id,
-          team_code: teamCode,
-          name:      `${g.teamHome} vs ${g.teamAway}`,
-          opponent:  g.teamAway,
-          date:      g.date,
-          meta_json: {
-            teamHome:  g.teamHome,
-            teamAway:  g.teamAway,
-            scoreHome: g.scoreHome,
-            scoreAway: g.scoreAway,
-            week:      g.week,
-            plays:     g.plays,
-            state:     g.state,
-          },
-        }),
+      const body = JSON.stringify({
+        id:        g.id,
+        team_code: teamCode,
+        name:      `${g.teamHome} vs ${g.teamAway}`,
+        opponent:  g.teamAway,
+        date:      g.date,
+        meta_json: {
+          teamHome:  g.teamHome,
+          teamAway:  g.teamAway,
+          scoreHome: g.scoreHome,
+          scoreAway: g.scoreAway,
+          week:      g.week,
+          plays:     g.plays,
+          state:     g.state,
+        },
       });
+
+      // Intentar INSERT
+      const res = await fetch(
+        `${SB_URL}/rest/v1/games?apikey=${SB_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+          },
+          body,
+        }
+      );
+
+      // Si ya existe, hacer PATCH
+      if (res.status === 409 || res.status === 400) {
+        await fetch(
+          `${SB_URL}/rest/v1/games?id=eq.${g.id}&apikey=${SB_KEY}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`,
+              'Prefer': 'return=minimal',
+            },
+            body,
+          }
+        );
+      }
     }
   }
 

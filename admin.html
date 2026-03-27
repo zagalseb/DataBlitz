@@ -401,6 +401,7 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<script src="js/supabase.js"></script>
 <script src="js/teamConfig.js"></script>
 <script>
 'use strict';
@@ -594,6 +595,13 @@ function createTeam() {
   if (document.getElementById('chk-pp').checked)       products.push('pp');
 
   TeamConfig.registerTeam(code, products);
+  if (typeof SupabaseDB !== 'undefined') {
+    const _prevTeam = TeamConfig.getActiveTeam();
+    TeamConfig.setActiveTeam(code);
+    SupabaseDB.upsertTeam(code).catch(console.warn);
+    if (_prevTeam) TeamConfig.setActiveTeam(_prevTeam);
+    else TeamConfig.clearActiveTeam();
+  }
   input.value = '';
   document.getElementById('chk-gametime').checked = true;
   document.getElementById('chk-pp').checked       = true;

@@ -85,7 +85,7 @@ const GameManager = (() => {
 
     const _tc = TeamConfig.getActiveTeam();
     if (_tc && typeof SupabaseDB !== 'undefined') {
-      SupabaseDB.sync(_tc).catch(console.warn);
+      SupabaseDB.saveGames(_tc, games).catch(console.warn);
     }
   }
 

@@ -107,8 +107,9 @@ const SupabaseDB = (() => {
         body,
       }
     );
-    if (res.status === 409 || res.status === 400) {
-      await fetch(
+    if (!res.ok) {
+      // POST falló (equipo ya existe u otro error) — intentar PATCH directo
+      const patchRes = await fetch(
         `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
         {
           method: 'PATCH',
@@ -121,6 +122,10 @@ const SupabaseDB = (() => {
           body,
         }
       );
+      if (!patchRes.ok) {
+        const errText = await patchRes.text();
+        throw new Error(`upsertTeamData PATCH failed ${patchRes.status}: ${errText}`);
+      }
     }
   }
 

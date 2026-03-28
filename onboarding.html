@@ -878,7 +878,7 @@ function saveAndFinish() {
         color:       WS.color,
         logo:        WS.logo || null,
         configuredAt: new Date().toISOString(),
-      }).catch(console.warn);
+      }).catch(err => console.error('[onboarding] upsertTeamData falló:', err));
     }
   }
 

@@ -84,22 +84,48 @@ const SupabaseDB = (() => {
     }
   }
 
+  // Usado por admin.html al CREAR un equipo nuevo — siempre INSERT
+  async function createTeamInSupabase(teamCode, products) {
+    if (!isOnline()) return;
+    const body = JSON.stringify({
+      team_code:   teamCode,
+      name:        teamCode,
+      initials:    teamCode.slice(0, 2),
+      color:       '#00C896',
+      logo:        null,
+      config_json: null,
+    });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey':        SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer':        'return=minimal',
+        },
+        body,
+      }
+    );
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`createTeamInSupabase POST ${res.status}: ${errText}`);
+    }
+  }
+
+  // Usado por onboarding.html al ACTUALIZAR config de equipo existente — siempre PATCH
   async function upsertTeamData(teamCode, data) {
     if (!isOnline()) return;
-    const payload = {
+    const body = JSON.stringify({
       team_code:   teamCode,
       name:        data.name        || teamCode,
       initials:    data.initials    || teamCode.slice(0, 2),
       color:       data.color       || '#00C896',
       logo:        data.logo        || null,
       config_json: data,
-    };
-    const body = JSON.stringify(payload);
-
-    // Siempre PATCH — el equipo siempre existe (Admin lo creó primero).
-    // POST con resolution=merge-duplicates falla porque PostgREST usa
-    // la PK (uuid auto-generado), no team_code, para detectar conflictos.
-    const patchRes = await fetch(
+    });
+    const res = await fetch(
       `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
       {
         method: 'PATCH',
@@ -112,33 +138,9 @@ const SupabaseDB = (() => {
         body,
       }
     );
-
-    if (!patchRes.ok) {
-      const errText = await patchRes.text();
-      throw new Error(`upsertTeamData PATCH ${patchRes.status}: ${errText}`);
-    }
-
-    // Si el PATCH no afectó ninguna fila (equipo aún no existe — caso raro),
-    // hacer POST para crearlo
-    const count = patchRes.headers.get('content-range');
-    if (count === '*/0' || count === null) {
-      const postRes = await fetch(
-        `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey':        SB_KEY,
-            'Authorization': `Bearer ${SB_KEY}`,
-            'Prefer':        'return=minimal',
-          },
-          body,
-        }
-      );
-      if (!postRes.ok) {
-        const errText = await postRes.text();
-        throw new Error(`upsertTeamData POST ${postRes.status}: ${errText}`);
-      }
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`upsertTeamData PATCH ${res.status}: ${errText}`);
     }
   }
 
@@ -506,7 +508,7 @@ const SupabaseDB = (() => {
   }
 
   return {
-    sync, upsertTeam, upsertTeamData,
+    sync, upsertTeam, upsertTeamData, createTeamInSupabase,
     loadGames, saveGames, deleteGame,
     loadPlaybook, savePlaybook,
     showSyncStatus, isOnline,

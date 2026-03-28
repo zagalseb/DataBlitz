@@ -596,11 +596,8 @@ function createTeam() {
 
   TeamConfig.registerTeam(code, products);
   if (typeof SupabaseDB !== 'undefined') {
-    SupabaseDB.upsertTeamData(code, {
-      name:     code,
-      initials: code.slice(0, 2),
-      color:    '#00C896',
-    }).catch(console.warn);
+    SupabaseDB.createTeamInSupabase(code, products)
+      .catch(err => console.error('[admin] createTeamInSupabase falló:', err));
   }
   input.value = '';
   document.getElementById('chk-gametime').checked = true;

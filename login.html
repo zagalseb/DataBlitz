@@ -263,22 +263,22 @@ async function doLogin() {
   try {
     // Siempre consultar Supabase — fuente de verdad
     const res = await fetch(
-      `${SB_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${SB_KEY}`,
+      `${SB_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,name,initials,color,logo,config_json&apikey=${SB_KEY}`,
       { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
     );
     const rows = await res.json();
 
     if (!rows || rows.length === 0) {
-      // No existe en Supabase ni local
+      // No existe en Supabase
       if (!TeamConfig.teamExists(code)) {
         showError('Código inválido. Verifica con tu analista.');
         btn.textContent = 'Entrar';
         btn.disabled = false;
         return;
       }
-      // Existe local pero no en Supabase — dejar pasar (caso offline previo)
+      // Existe local pero no en Supabase — caso offline previo, dejar pasar
     } else {
-      // Existe en Supabase — registrar localmente y guardar config
+      // Existe en Supabase — fuente de verdad
       const remoteConfig = rows[0].config_json;
 
       // Registrar equipo local si no existe
@@ -286,12 +286,18 @@ async function doLogin() {
         TeamConfig.registerTeam(code, ['gametime', 'pp']);
       }
 
-      // Guardar config en localStorage SIEMPRE que venga de Supabase
+      // Determinar si el equipo ya completó onboarding
+      // Criterio 1: configuredAt presente en config_json
+      // Criterio 2: tiene nombre real aunque falte configuredAt (Admin creó el equipo con nombre)
+      const hasRealName = remoteConfig &&
+                          remoteConfig.name &&
+                          remoteConfig.name !== code &&
+                          remoteConfig.name !== 'Mi Equipo' &&
+                          remoteConfig.name.trim() !== '';
+
       if (remoteConfig && typeof remoteConfig === 'object') {
-        // Forzar configuredAt si tiene nombre real
-        const hasRealName = remoteConfig.name &&
-                            remoteConfig.name !== code &&
-                            remoteConfig.name !== 'Mi Equipo';
+        // Siempre forzar configuredAt si hay nombre real — garantiza que
+        // cualquier dispositivo nuevo entre directo al hub
         if (hasRealName && !remoteConfig.configuredAt) {
           remoteConfig.configuredAt = new Date().toISOString();
         }
@@ -299,7 +305,23 @@ async function doLogin() {
           `${code}:playsync_team_config`,
           JSON.stringify(remoteConfig)
         );
+      } else if (hasRealName || (rows[0].name && rows[0].name !== code && rows[0].name !== 'Mi Equipo')) {
+        // config_json es null pero la columna name tiene valor real
+        // Construir config mínima desde las columnas top-level de teams
+        const minimalConfig = {
+          name:         rows[0].name        || code,
+          initials:     rows[0].initials    || code.slice(0, 2).toUpperCase(),
+          color:        rows[0].color       || '#00C896',
+          logo:         rows[0].logo        || null,
+          configuredAt: new Date().toISOString(),
+        };
+        localStorage.setItem(
+          `${code}:playsync_team_config`,
+          JSON.stringify(minimalConfig)
+        );
       }
+      // Si config_json es null Y name es default/null → equipo creado por Admin
+      // sin onboarding completado → correctamente cae a onboarding
     }
   } catch (err) {
     // Sin conexión — intentar con localStorage

@@ -139,7 +139,7 @@ function getGame(id) {
   return getGames().find(g => g.id === id) ?? null;
 }
 
-function saveGame({ id, name, date, opponent, status }) {
+function saveGame({ id, name, date, opponent, status }, _skipRemote = false) {
   ppUpdate(PP_KEYS.games(), (games) => {
     const list = games ?? [];
     const game = {
@@ -157,7 +157,7 @@ function saveGame({ id, name, date, opponent, status }) {
     }
     return list;
   });
-  if (_ppSB() && _ppTeam()) {
+  if (!_skipRemote && _ppSB() && _ppTeam()) {
     const g = getGame(id || '');
     if (g) SupabaseDB.upsertPPGame(_ppTeam(), g).catch(console.warn);
   }

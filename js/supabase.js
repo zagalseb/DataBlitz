@@ -86,45 +86,58 @@ const SupabaseDB = (() => {
 
   async function upsertTeamData(teamCode, data) {
     if (!isOnline()) return;
-    const body = JSON.stringify({
+    const payload = {
       team_code:   teamCode,
       name:        data.name        || teamCode,
       initials:    data.initials    || teamCode.slice(0, 2),
       color:       data.color       || '#00C896',
       logo:        data.logo        || null,
       config_json: data,
-    });
-    const res = await fetch(
-      `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
+    };
+    const body = JSON.stringify(payload);
+
+    // Siempre PATCH — el equipo siempre existe (Admin lo creó primero).
+    // POST con resolution=merge-duplicates falla porque PostgREST usa
+    // la PK (uuid auto-generado), no team_code, para detectar conflictos.
+    const patchRes = await fetch(
+      `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
       {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': SB_KEY,
+          'apikey':        SB_KEY,
           'Authorization': `Bearer ${SB_KEY}`,
-          'Prefer': 'resolution=merge-duplicates,return=minimal',
+          'Prefer':        'return=minimal',
         },
         body,
       }
     );
-    if (!res.ok) {
-      // POST falló (equipo ya existe u otro error) — intentar PATCH directo
-      const patchRes = await fetch(
-        `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
+
+    if (!patchRes.ok) {
+      const errText = await patchRes.text();
+      throw new Error(`upsertTeamData PATCH ${patchRes.status}: ${errText}`);
+    }
+
+    // Si el PATCH no afectó ninguna fila (equipo aún no existe — caso raro),
+    // hacer POST para crearlo
+    const count = patchRes.headers.get('content-range');
+    if (count === '*/0' || count === null) {
+      const postRes = await fetch(
+        `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
         {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': SB_KEY,
+            'apikey':        SB_KEY,
             'Authorization': `Bearer ${SB_KEY}`,
-            'Prefer': 'return=minimal',
+            'Prefer':        'return=minimal',
           },
           body,
         }
       );
-      if (!patchRes.ok) {
-        const errText = await patchRes.text();
-        throw new Error(`upsertTeamData PATCH failed ${patchRes.status}: ${errText}`);
+      if (!postRes.ok) {
+        const errText = await postRes.text();
+        throw new Error(`upsertTeamData POST ${postRes.status}: ${errText}`);
       }
     }
   }

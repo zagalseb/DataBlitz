@@ -871,7 +871,15 @@ function saveAndFinish() {
   });
   if (typeof SupabaseDB !== 'undefined') {
     const _tc = TeamConfig.getActiveTeam();
-    if (_tc) SupabaseDB.upsertTeam(_tc).catch(console.warn);
+    if (_tc) {
+      SupabaseDB.upsertTeamData(_tc, {
+        name:        WS.name.trim(),
+        initials:    WS.initials.trim() || autoInitials(WS.name),
+        color:       WS.color,
+        logo:        WS.logo || null,
+        configuredAt: new Date().toISOString(),
+      }).catch(console.warn);
+    }
   }
 
   // 2. Aplicar formaciones al playbook OWN OFF

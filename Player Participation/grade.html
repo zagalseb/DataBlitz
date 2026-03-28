@@ -887,19 +887,10 @@ function loadPlay(index) {
     ? deepMergeGrades(play.grades)
     : {};
 
-  // Lineup:
-  if (play.lineup && Object.keys(play.lineup).length > 0) {
-    // Jugada ya trabajada → cargar su lineup guardado
-    currentLineup = { ...play.lineup };
-  } else if (formationChanged && template) {
-    // Formación nueva, jugada no trabajada → migrar por label
-    currentLineup = migrateLineup(prevPositions, currentPositions, prevLineup);
-    showFormationChangeNotice(prevPlay.formation, play.formation);
-  } else if (template && prevPositions.length > 0) {
-    // Misma formación con template → migrar por label para reasignar IDs correctamente
-    currentLineup = migrateLineup(prevPositions, currentPositions, prevLineup);
-  }
-  // else: currentLineup se mantiene sin cambios (sin template)
+  // Lineup: cargar desde la jugada guardada
+  currentLineup = (play.lineup && Object.keys(play.lineup).length > 0)
+    ? { ...play.lineup }
+    : {};
 
   // Update UI
   renderPlayHeader();

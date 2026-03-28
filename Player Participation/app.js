@@ -649,7 +649,14 @@ function getUnitLabel(unit) {
  * @param {string} gametimeGameId - id del partido en Gametime
  * @returns {string} - id del partido creado en PP
  */
-function importGameFromGametime(gametimeGameId, customName) {
+async function importGameFromGametime(gametimeGameId, customName) {
+  // Intentar sync de Gametime antes de importar
+  if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+    try {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc) await SupabaseDB.sync(tc);
+    } catch (e) { console.warn('Pre-import sync failed:', e); }
+  }
   const raw   = localStorage.getItem(TeamConfig.key('playsync_games'));
   const games = raw ? JSON.parse(raw) : [];
   const game  = games.find(g => g.id === gametimeGameId);

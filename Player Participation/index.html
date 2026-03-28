@@ -860,7 +860,7 @@
   /* ─────────────────────────────────────────────
      CREATE GAME
   ───────────────────────────────────────────── */
-  function createGame() {
+  async function createGame() {
     const name     = document.getElementById('f-name').value.trim();
     const opponent = document.getElementById('f-opponent').value.trim();
     const date     = document.getElementById('f-date').value;
@@ -891,7 +891,7 @@
         return;
       }
       try {
-        gameId = importGameFromGametime(selectedGametimeId, name);
+        gameId = await importGameFromGametime(selectedGametimeId, name);
       } catch (err) {
         showToast('Error al importar — verifica que el partido tenga jugadas');
         console.error(err);

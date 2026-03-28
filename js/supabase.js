@@ -39,6 +39,8 @@ const SupabaseDB = (() => {
     if (!isOnline()) return;
     const cfg = TeamConfig.get();
     if (!cfg) return;
+    // No subir si el nombre es el default — esperamos el onboarding
+    if (!cfg.configuredAt || cfg.name === 'Mi Equipo') return;
 
     const body = JSON.stringify({
       team_code:   teamCode,
@@ -206,7 +208,9 @@ const SupabaseDB = (() => {
       return { ok: false, reason: 'offline' };
     }
     try {
-      await upsertTeam(teamCode);
+      // Solo upsert team si no está configurado aún (evita sobreescribir con defaults)
+      const cfg = TeamConfig.get();
+      if (!cfg.configuredAt) await upsertTeam(teamCode);
       const localKey   = TeamConfig.key('playsync_games');
       const localGames = JSON.parse(localStorage.getItem(localKey) || '[]');
       const remoteGames = await loadGames(teamCode);

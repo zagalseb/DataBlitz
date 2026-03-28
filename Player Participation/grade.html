@@ -1531,13 +1531,18 @@ function prevPlay() {
 }
 
 function saveCurrentState() {
-  plays = getPlays(currentGame.id); // fresh copy
   updatePlay(currentGame.id, currentPlayIndex, {
     lineup: getCurrentLineup(),
     grades: getCurrentGrades(),
     unit:   activeUnit,
   });
-  plays = getPlays(currentGame.id); // re-sync
+  // Actualizar el array en memoria también para que loadPlay() lo vea
+  plays[currentPlayIndex] = {
+    ...plays[currentPlayIndex],
+    lineup: getCurrentLineup(),
+    grades: getCurrentGrades(),
+    unit:   activeUnit,
+  };
 }
 
 function updateNavButtons() {

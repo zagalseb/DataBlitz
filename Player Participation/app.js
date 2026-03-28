@@ -663,6 +663,10 @@ async function importGameFromGametime(gametimeGameId, customName) {
   if (!game) throw new Error('Partido no encontrado en Gametime');
 
   const history = game.state?.history ?? [];
+  console.log(`[Import] Partido ${gametimeGameId}: ${history.length} jugadas en history`);
+  if (history.length === 0) {
+    throw new Error('El partido no tiene jugadas registradas en Gametime');
+  }
 
   const plays = history.map((h, i) => ({
     playNumber:   i + 1,

@@ -275,8 +275,17 @@ async function doLogin() {
         return;
       }
       TeamConfig.registerTeam(code, ['gametime', 'pp']);
-      if (rows[0].config_json?.configuredAt) {
-        localStorage.setItem(`${code}:playsync_team_config`, JSON.stringify(rows[0].config_json));
+      const remoteConfig = rows[0].config_json;
+      if (remoteConfig) {
+        // Guardar config remota siempre que tenga nombre real (no el code como nombre)
+        const hasRealName = remoteConfig.name && remoteConfig.name !== code;
+        if (remoteConfig.configuredAt || hasRealName) {
+          // Asegurar que configuredAt exista para que isConfigured() retorne true
+          if (!remoteConfig.configuredAt) {
+            remoteConfig.configuredAt = new Date().toISOString();
+          }
+          localStorage.setItem(`${code}:playsync_team_config`, JSON.stringify(remoteConfig));
+        }
       }
     } catch (err) {
       showError('Sin conexión. Intenta de nuevo.');

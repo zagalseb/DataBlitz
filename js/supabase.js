@@ -82,6 +82,46 @@ const SupabaseDB = (() => {
     }
   }
 
+  async function upsertTeamData(teamCode, data) {
+    if (!isOnline()) return;
+    const body = JSON.stringify({
+      team_code:   teamCode,
+      name:        data.name        || teamCode,
+      initials:    data.initials    || teamCode.slice(0, 2),
+      color:       data.color       || '#00C896',
+      logo:        data.logo        || null,
+      config_json: data,
+    });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/teams?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/teams?team_code=eq.${teamCode}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body,
+        }
+      );
+    }
+  }
+
   // ── Games ─────────────────────────────────────────────────────
   async function loadGames(teamCode) {
     const rows = await _req(
@@ -444,7 +484,7 @@ const SupabaseDB = (() => {
   }
 
   return {
-    sync, upsertTeam,
+    sync, upsertTeam, upsertTeamData,
     loadGames, saveGames, deleteGame,
     loadPlaybook, savePlaybook,
     showSyncStatus, isOnline,

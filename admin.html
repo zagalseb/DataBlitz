@@ -596,11 +596,11 @@ function createTeam() {
 
   TeamConfig.registerTeam(code, products);
   if (typeof SupabaseDB !== 'undefined') {
-    const _prevTeam = TeamConfig.getActiveTeam();
-    TeamConfig.setActiveTeam(code);
-    SupabaseDB.upsertTeam(code).catch(console.warn);
-    if (_prevTeam) TeamConfig.setActiveTeam(_prevTeam);
-    else TeamConfig.clearActiveTeam();
+    SupabaseDB.upsertTeamData(code, {
+      name:     code,
+      initials: code.slice(0, 2),
+      color:    '#00C896',
+    }).catch(console.warn);
   }
   input.value = '';
   document.getElementById('chk-gametime').checked = true;

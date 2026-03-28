@@ -248,62 +248,77 @@ async function doLogin() {
     return;
   }
 
-  // Código admin — redirigir a admin.html
   if (code === ADMIN_CODE) {
     window.location.href = 'admin.html';
     return;
   }
 
-  if (!TeamConfig.teamExists(code)) {
-    const SB_URL = 'https://jaavutcczjshpxdoylwy.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
+  const btn = document.getElementById('btn-login');
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
 
-    const btn = document.getElementById('btn-login');
-    btn.textContent = 'Verificando...';
-    btn.disabled = true;
+  const SB_URL = 'https://jaavutcczjshpxdoylwy.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXZ1dGNjempzaHB4ZG95bHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDkzNTAsImV4cCI6MjA5MDEyNTM1MH0.QKajbSImavHha9P9jY8xk_4BMFbdjV4Lv_7zUL2KFSk';
 
-    try {
-      const res = await fetch(
-        `${SB_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${SB_KEY}`,
-        { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
-      );
-      const rows = await res.json();
-      if (!rows || rows.length === 0) {
+  try {
+    // Siempre consultar Supabase — fuente de verdad
+    const res = await fetch(
+      `${SB_URL}/rest/v1/teams?team_code=eq.${code}&select=team_code,config_json&apikey=${SB_KEY}`,
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
+    );
+    const rows = await res.json();
+
+    if (!rows || rows.length === 0) {
+      // No existe en Supabase ni local
+      if (!TeamConfig.teamExists(code)) {
         showError('Código inválido. Verifica con tu analista.');
         btn.textContent = 'Entrar';
         btn.disabled = false;
         return;
       }
-      TeamConfig.registerTeam(code, ['gametime', 'pp']);
+      // Existe local pero no en Supabase — dejar pasar (caso offline previo)
+    } else {
+      // Existe en Supabase — registrar localmente y guardar config
       const remoteConfig = rows[0].config_json;
-      if (remoteConfig) {
-        // Guardar config remota siempre que tenga nombre real (no el code como nombre)
-        const hasRealName = remoteConfig.name && remoteConfig.name !== code;
-        if (remoteConfig.configuredAt || hasRealName) {
-          // Asegurar que configuredAt exista para que isConfigured() retorne true
-          if (!remoteConfig.configuredAt) {
-            remoteConfig.configuredAt = new Date().toISOString();
-          }
-          localStorage.setItem(`${code}:playsync_team_config`, JSON.stringify(remoteConfig));
-        }
+
+      // Registrar equipo local si no existe
+      if (!TeamConfig.teamExists(code)) {
+        TeamConfig.registerTeam(code, ['gametime', 'pp']);
       }
-    } catch (err) {
-      showError('Sin conexión. Intenta de nuevo.');
+
+      // Guardar config en localStorage SIEMPRE que venga de Supabase
+      if (remoteConfig && typeof remoteConfig === 'object') {
+        // Forzar configuredAt si tiene nombre real
+        const hasRealName = remoteConfig.name &&
+                            remoteConfig.name !== code &&
+                            remoteConfig.name !== 'Mi Equipo';
+        if (hasRealName && !remoteConfig.configuredAt) {
+          remoteConfig.configuredAt = new Date().toISOString();
+        }
+        localStorage.setItem(
+          `${code}:playsync_team_config`,
+          JSON.stringify(remoteConfig)
+        );
+      }
+    }
+  } catch (err) {
+    // Sin conexión — intentar con localStorage
+    console.warn('Login offline:', err);
+    if (!TeamConfig.teamExists(code)) {
+      showError('Sin conexión y código no reconocido localmente.');
       btn.textContent = 'Entrar';
       btn.disabled = false;
       return;
     }
-
-    btn.textContent = 'Entrar';
-    btn.disabled = false;
   }
 
-  // Código de equipo normal
-  if (!TeamConfig.login(code)) {
-    showError('Código inválido. Verifica con tu analista.');
-    return;
-  }
+  // Activar equipo
+  TeamConfig.setActiveTeam(code);
 
+  btn.textContent = 'Entrar';
+  btn.disabled = false;
+
+  // Decidir destino basado en localStorage (ya actualizado desde Supabase)
   if (TeamConfig.isConfigured()) {
     window.location.href = 'index.html';
   } else {

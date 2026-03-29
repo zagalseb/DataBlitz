@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'datablitz-v3';
+const CACHE_NAME = 'datablitz-v4';
 
 const FILES_TO_CACHE = [
   '/DataBlitz/',

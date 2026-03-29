@@ -893,16 +893,20 @@ function loadPlay(index) {
     ? deepMergeGrades(play.grades)
     : {};
 
-  // Lineup: si la jugada ya fue trabajada, cargar exactamente lo guardado.
-  // Si es jugada nueva, migrar por LABEL de posición independientemente
-  // de si cambió la formación — el jugador sigue en su posición (QB, WR, etc.)
-  if (play.lineup && Object.keys(play.lineup).length > 0) {
-    currentLineup = { ...play.lineup };
-  } else if (prevPositions.length > 0 && Object.keys(prevLineup).length > 0) {
-    currentLineup = migrateLineup(prevPositions, currentPositions, prevLineup);
-  } else {
-    currentLineup = {};
-  }
+  // Migrar siempre desde la jugada anterior por label
+  const migratedLineup = (prevPositions.length > 0 && Object.keys(prevLineup).length > 0)
+    ? migrateLineup(prevPositions, currentPositions, prevLineup)
+    : {};
+
+  // Merge: lo guardado en esta jugada + lo migrado del anterior
+  // Lo guardado tiene prioridad (asignaciones explícitas de esta jugada)
+  // Lo migrado rellena las posiciones que no tienen jugador asignado
+  const savedLineup = (play.lineup && Object.keys(play.lineup).length > 0)
+    ? { ...play.lineup }
+    : {};
+
+  // Migrado como base, guardado sobreescribe
+  currentLineup = { ...migratedLineup, ...savedLineup };
 
   // Update UI
   renderPlayHeader();

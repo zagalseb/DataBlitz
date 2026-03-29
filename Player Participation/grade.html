@@ -1529,17 +1529,29 @@ function getCurrentGrades() {
    NAVIGATION
 ═══════════════════════════════════════════════════ */
 function saveCurrentState() {
-  // 1. Actualizar array en memoria INMEDIATAMENTE
+  const existingPlay = plays[currentPlayIndex] || {};
+  const existingLineup = existingPlay.lineup || {};
+  const mergedLineup = { ...existingLineup, ...getCurrentLineup() };
+
+  const existingGrades = existingPlay.grades || {};
+  const currentGradesObj = getCurrentGrades();
+  const mergedGrades = { ...existingGrades };
+  for (const [pid, g] of Object.entries(currentGradesObj)) {
+    mergedGrades[pid] = { ...(existingGrades[pid] || {}), ...g };
+  }
+
   plays[currentPlayIndex] = {
-    ...plays[currentPlayIndex],
-    lineup: getCurrentLineup(),
-    grades: getCurrentGrades(),
+    ...existingPlay,
+    lineup: mergedLineup,
+    grades: mergedGrades,
     unit:   activeUnit,
   };
-  // 2. Persistir a localStorage y Supabase
+
+  currentLineup = { ...mergedLineup };
+
   updatePlay(currentGame.id, currentPlayIndex, {
-    lineup: getCurrentLineup(),
-    grades: getCurrentGrades(),
+    lineup: mergedLineup,
+    grades: mergedGrades,
     unit:   activeUnit,
   });
 }
@@ -1547,8 +1559,6 @@ function saveCurrentState() {
 function nextPlay() {
   if (currentPlayIndex < plays.length - 1) {
     saveCurrentState();
-    // plays[currentPlayIndex] ya tiene el lineup actualizado en memoria
-    // loadPlay lo leerá correctamente para decidir si migrar o cargar
     loadPlay(currentPlayIndex + 1);
   }
 }

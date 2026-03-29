@@ -507,6 +507,13 @@ const SupabaseDB = (() => {
     return rows?.[0]?.data_json || null;
   }
 
+  function _sbUrl() { return SB_URL; }
+  function _sbKey() { return SB_KEY; }
+
+  async function _deletePlay(playId) {
+    await _req(`pp_plays?id=eq.${playId}`, { method: 'DELETE' });
+  }
+
   return {
     sync, upsertTeam, upsertTeamData, createTeamInSupabase,
     loadGames, saveGames, deleteGame,
@@ -517,5 +524,6 @@ const SupabaseDB = (() => {
     upsertPPGame, loadPPGames,
     upsertPPPlay, loadPPPlays,
     syncPPFormations, loadPPFormations,
+    _sbUrl, _sbKey, _deletePlay,
   };
 })();

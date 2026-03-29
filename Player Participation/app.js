@@ -195,10 +195,25 @@ function savePlays(gameId, plays) {
   ppSet(PP_KEYS.plays(gameId), plays);
   if (_ppSB() && _ppTeam()) {
     const tc = _ppTeam();
-    // Subir en secuencia para evitar condición de carrera
     (async () => {
+      // Subir jugadas nuevas en secuencia
       for (let i = 0; i < plays.length; i++) {
         await SupabaseDB.upsertPPPlay(tc, gameId, i, plays[i]).catch(console.warn);
+      }
+      // Borrar jugadas huérfanas en Supabase (índices mayores al nuevo total)
+      // Esto evita que imports previos dejen jugadas extra
+      const staleStart = plays.length;
+      for (let i = staleStart; i < staleStart + 20; i++) {
+        const staleId = `${gameId}_${i}`;
+        try {
+          const check = await fetch(
+            `${SupabaseDB._sbUrl()}/rest/v1/pp_plays?id=eq.${staleId}&select=id&apikey=${SupabaseDB._sbKey()}`,
+            { headers: { 'apikey': SupabaseDB._sbKey(), 'Authorization': `Bearer ${SupabaseDB._sbKey()}` } }
+          );
+          const rows = await check.json();
+          if (!rows || rows.length === 0) break; // No hay más huérfanas
+          await SupabaseDB._deletePlay(staleId);
+        } catch { break; }
       }
     })();
   }

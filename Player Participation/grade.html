@@ -887,10 +887,16 @@ function loadPlay(index) {
     ? deepMergeGrades(play.grades)
     : {};
 
-  // Lineup: cargar desde la jugada guardada
-  currentLineup = (play.lineup && Object.keys(play.lineup).length > 0)
-    ? { ...play.lineup }
-    : {};
+  // Lineup: si la jugada ya fue trabajada, cargar exactamente lo guardado.
+  // Si es jugada nueva, migrar por LABEL de posición independientemente
+  // de si cambió la formación — el jugador sigue en su posición (QB, WR, etc.)
+  if (play.lineup && Object.keys(play.lineup).length > 0) {
+    currentLineup = { ...play.lineup };
+  } else if (prevPositions.length > 0 && Object.keys(prevLineup).length > 0) {
+    currentLineup = migrateLineup(prevPositions, currentPositions, prevLineup);
+  } else {
+    currentLineup = {};
+  }
 
   // Update UI
   renderPlayHeader();

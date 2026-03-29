@@ -663,7 +663,10 @@
           // Remoto gana si tiene más jugadas calificadas
           const remoteGraded = remotePlays.filter(p => Object.keys(p.grades || {}).length > 0).length;
           const localGraded  = localPlays.filter(p => Object.keys(p.grades || {}).length > 0).length;
-          if (remoteGraded >= localGraded) {
+          const shouldUseRemote = localPlays.length === 0 ||
+            remoteGraded > localGraded ||
+            (remoteGraded === localGraded && remotePlays.length >= localPlays.length);
+          if (shouldUseRemote) {
             ppSet(PP_KEYS.plays(id), remotePlays);
           }
         }
@@ -910,7 +913,20 @@
     showToast('Partido creado ✓');
 
     // Navigate automatically
-    setTimeout(() => openGame(gameId), 400);
+    // Esperar a que las jugadas suban antes de navegar
+    const _waitAndOpen = async () => {
+      if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline() && _ppTeam()) {
+        const plays = ppGet(PP_KEYS.plays(gameId)) ?? [];
+        if (plays.length > 0) {
+          const tc = _ppTeam();
+          for (let i = 0; i < plays.length; i++) {
+            await SupabaseDB.upsertPPPlay(tc, gameId, i, plays[i]).catch(console.warn);
+          }
+        }
+      }
+      openGame(gameId);
+    };
+    setTimeout(_waitAndOpen, 100);
   }
 
   /* ─────────────────────────────────────────────

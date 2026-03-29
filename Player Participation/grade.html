@@ -799,7 +799,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             Object.keys(p.lineup || {}).length > 0 ||
             Object.keys(p.grades || {}).length > 0
           ).length;
-          if (remoteGraded >= localGraded) {
+          // Usar remoto si tiene más jugadas gradeadas,
+          // o si local no tiene jugadas (dispositivo nuevo)
+          // NUNCA reemplazar si local tiene más jugadas en total
+          const shouldUseRemote = localPlays.length === 0 ||
+            remoteGraded > localGraded ||
+            (remoteGraded === localGraded && remotePlays.length >= localPlays.length);
+          if (shouldUseRemote) {
             ppSet(PP_KEYS.plays(currentGame.id), remotePlays);
           }
         }

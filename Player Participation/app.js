@@ -384,7 +384,7 @@ const DEFAULT_FORMATIONS = [
   // ── PUNT SPREAD ──────────────────────────────────
   {
     id:        'default-st-punt-spread',
-    name:      'Punt Spread',
+    name:      'Punt',
     unit:      'ST',
     isDefault: true,
     positions: [

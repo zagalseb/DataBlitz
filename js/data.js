@@ -264,39 +264,44 @@ const OPP_DEFENSE_DATA = {
 
 const ST_PLAYBOOK = {
   formations: [
-    { id: 'st-kicking',  name: 'Kicking',  group: 'K' },
-    { id: 'st-return',   name: 'Return',   group: 'R' },
-    { id: 'st-coverage', name: 'Coverage', group: 'C' },
+    { id: 'st-kickoff',         name: 'Kickoff',            group: 'K' },
+    { id: 'st-kickoff-return',  name: 'Kickoff Return',     group: 'K' },
+    { id: 'st-punt',            name: 'Punt',               group: 'P' },
+    { id: 'st-punt-return',     name: 'Punt Return',        group: 'P' },
+    { id: 'st-field-goal',      name: 'Field Goal',         group: 'F' },
+    { id: 'st-fg-defense',      name: 'Field Goal Defense', group: 'F' },
   ],
   plays: {
-    'st-kicking': [
-      { id: 'st-kickoff',     name: 'Kickoff',        type: 'run' },
-      { id: 'st-kickoff-sky', name: 'Kickoff Sky',    type: 'run' },
-      { id: 'st-kickoff-sqb', name: 'Squib Kick',     type: 'run' },
-      { id: 'st-fg',          name: 'Field Goal',     type: 'run' },
-      { id: 'st-pat',         name: 'PAT',            type: 'run' },
-      { id: 'st-punt',        name: 'Punt',           type: 'run' },
-      { id: 'st-punt-away',   name: 'Punt Away',      type: 'run' },
-      { id: 'st-fake-punt',   name: 'Fake Punt',      type: 'run' },
-      { id: 'st-fake-fg',     name: 'Fake FG',        type: 'run' },
+    'st-kickoff': [
+      { id: 'st-ko-normal',  name: 'Kickoff Normal', type: 'run' },
+      { id: 'st-ko-sky',     name: 'Kickoff Sky',    type: 'run' },
+      { id: 'st-ko-squib',   name: 'Squib Kick',     type: 'run' },
+      { id: 'st-ko-onside',  name: 'Onside Kick',    type: 'run' },
     ],
-    'st-return': [
-      { id: 'st-ko-return',    name: 'KO Return',     type: 'run' },
-      { id: 'st-ko-ret-mid',   name: 'KO Return Mid', type: 'run' },
-      { id: 'st-ko-ret-right', name: 'KO Return R',   type: 'run' },
-      { id: 'st-ko-ret-left',  name: 'KO Return L',   type: 'run' },
-      { id: 'st-punt-return',  name: 'Punt Return',   type: 'run' },
-      { id: 'st-punt-ret-r',   name: 'Punt Return R', type: 'run' },
-      { id: 'st-punt-ret-l',   name: 'Punt Return L', type: 'run' },
-      { id: 'st-pr-reverse',   name: 'PR Reverse',    type: 'run' },
+    'st-kickoff-return': [
+      { id: 'st-kr-return',    name: 'Return',      type: 'run' },
+      { id: 'st-kr-fair',      name: 'Fair Catch',  type: 'run' },
+      { id: 'st-kr-touchback', name: 'Touchback',   type: 'run' },
     ],
-    'st-coverage': [
-      { id: 'st-ko-cover',     name: 'KO Coverage',   type: 'run' },
-      { id: 'st-punt-cover',   name: 'Punt Coverage', type: 'run' },
-      { id: 'st-fg-block',     name: 'FG Block',      type: 'run' },
-      { id: 'st-punt-block',   name: 'Punt Block',    type: 'run' },
-      { id: 'st-onside-def',   name: 'Onside Def',    type: 'run' },
-      { id: 'st-onside-off',   name: 'Onside Kick',   type: 'run' },
+    'st-punt': [
+      { id: 'st-p-normal',    name: 'Punt Normal',    type: 'run' },
+      { id: 'st-p-fake',      name: 'Fake Punt Run',  type: 'run' },
+      { id: 'st-p-fake-pass', name: 'Fake Punt Pass', type: 'pass' },
+    ],
+    'st-punt-return': [
+      { id: 'st-pr-return', name: 'Return',        type: 'run' },
+      { id: 'st-pr-fair',   name: 'Fair Catch',    type: 'run' },
+      { id: 'st-pr-block',  name: 'Block Attempt', type: 'run' },
+    ],
+    'st-field-goal': [
+      { id: 'st-fg-normal',    name: 'Field Goal',     type: 'run' },
+      { id: 'st-pat-normal',   name: 'PAT',            type: 'run' },
+      { id: 'st-fg-fake',      name: 'Fake FG Run',    type: 'run' },
+      { id: 'st-fg-fake-pass', name: 'Fake FG Pass',   type: 'pass' },
+    ],
+    'st-fg-defense': [
+      { id: 'st-fgd-block',  name: 'Block Attempt', type: 'run' },
+      { id: 'st-fgd-normal', name: 'Defend Normal', type: 'run' },
     ],
   },
   motions: [

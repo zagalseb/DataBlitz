@@ -938,6 +938,9 @@
     const name = game ? (game.opponent ? `vs ${game.opponent}` : game.name) : 'este partido';
     if (!confirm(`¿Eliminar "${name}"?\nSe borrarán todas sus jugadas y asignaciones.`)) return;
     deleteGame(id);
+    if (typeof SupabaseDB !== 'undefined') {
+      SupabaseDB.deletePPGame(id).catch(console.warn);
+    }
     renderGameList();
     updateQuickStats();
     showToast('Partido eliminado');

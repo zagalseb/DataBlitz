@@ -1066,10 +1066,12 @@ function renderField() {
       chip.classList.add('selected');
     }
 
-    // Dim chips of the other unit
-    const posUnit = getPositionUnit(pos.label);
-    if (posUnit && posUnit !== activeUnit) {
-      chip.classList.add('dimmed');
+    // En ST no dimmear por unidad — cualquier jugador puede estar en ST
+    if (activeUnit !== 'ST') {
+      const posUnit = getPositionUnit(pos.label);
+      if (posUnit && posUnit !== activeUnit) {
+        chip.classList.add('dimmed');
+      }
     }
 
     // Dim chips outside the active group filter

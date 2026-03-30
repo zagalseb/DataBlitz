@@ -225,14 +225,14 @@ const OPPONENT_PLAYBOOK = {
 
 const DEFENSE_DATA = {
   fronts: [
-    { id: '4-3',     name: '4-3 Base'        },
-    { id: '3-4',     name: '3-4 Base'        },
-    { id: '5-2',     name: '5-2'             },
-    { id: '4-4',     name: '4-4'             },
-    { id: '3-3-5',   name: '3-3-5 Stack'     },
-    { id: 'nickel',  name: 'Nickel (3-2-6)'  },
-    { id: 'dime',    name: 'Dime (2-3-6)'    },
-    { id: '46-bear', name: '46 Bear'         },
+    { id: '4-3',        name: '4-3'          },
+    { id: '3-4',        name: '3-4'          },
+    { id: '5-2',        name: '5-2'          },
+    { id: '4-4',        name: '4-4'          },
+    { id: '3-3',        name: '3-3'          },
+    { id: '3-2',        name: '3-2'          },
+    { id: '2-3',        name: '2-3'          },
+    { id: 'nickel-4-2', name: 'Nickel (4-2)' },
   ],
   blitzes: [
     { id: 'none',      name: 'No Blitz'    },

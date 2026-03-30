@@ -339,6 +339,149 @@ const DEFAULT_FORMATIONS = [
     ],
   },
 
+  // ── 4-3 ──────────────────────────────────────────
+  {
+    id: 'default-def-43', name: '4-3', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',  label: 'DE-L',  x: 36, y: 62 },
+      { id: 'DT-L',  label: 'DT-L',  x: 44, y: 62 },
+      { id: 'DT-R',  label: 'DT-R',  x: 56, y: 62 },
+      { id: 'DE-R',  label: 'DE-R',  x: 64, y: 62 },
+      { id: 'WILL',  label: 'WILL',  x: 38, y: 54 },
+      { id: 'MLB',   label: 'MLB',   x: 50, y: 54 },
+      { id: 'SAM',   label: 'SAM',   x: 62, y: 54 },
+      { id: 'CB-L',  label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',  label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',    label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',    label: 'SS',    x: 68, y: 46 },
+    ],
+  },
+
+  // ── 3-4 ──────────────────────────────────────────
+  {
+    id: 'default-def-34', name: '3-4', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',    label: 'DE-L',   x: 40, y: 62 },
+      { id: 'NT',      label: 'NT',     x: 50, y: 62 },
+      { id: 'DE-R',    label: 'DE-R',   x: 60, y: 62 },
+      { id: 'OLB-L',   label: 'OLB-L', x: 28, y: 56 },
+      { id: 'ILB-L',   label: 'ILB-L', x: 44, y: 54 },
+      { id: 'ILB-R',   label: 'ILB-R', x: 56, y: 54 },
+      { id: 'OLB-R',   label: 'OLB-R', x: 72, y: 56 },
+      { id: 'CB-L',    label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',    label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',      label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',      label: 'SS',    x: 68, y: 46 },
+    ],
+  },
+
+  // ── 5-2 ──────────────────────────────────────────
+  {
+    id: 'default-def-52', name: '5-2', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',  label: 'DE-L',  x: 32, y: 62 },
+      { id: 'DT-L',  label: 'DT-L',  x: 41, y: 62 },
+      { id: 'NT',    label: 'NT',    x: 50, y: 62 },
+      { id: 'DT-R',  label: 'DT-R',  x: 59, y: 62 },
+      { id: 'DE-R',  label: 'DE-R',  x: 68, y: 62 },
+      { id: 'MLB-L', label: 'MLB-L', x: 44, y: 54 },
+      { id: 'MLB-R', label: 'MLB-R', x: 56, y: 54 },
+      { id: 'CB-L',  label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',  label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',    label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',    label: 'SS',    x: 68, y: 46 },
+    ],
+  },
+
+  // ── 4-4 ──────────────────────────────────────────
+  {
+    id: 'default-def-44', name: '4-4', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',  label: 'DE-L',  x: 36, y: 62 },
+      { id: 'DT-L',  label: 'DT-L',  x: 44, y: 62 },
+      { id: 'DT-R',  label: 'DT-R',  x: 56, y: 62 },
+      { id: 'DE-R',  label: 'DE-R',  x: 64, y: 62 },
+      { id: 'LB-L',  label: 'LB-L',  x: 30, y: 54 },
+      { id: 'MLB-L', label: 'MLB-L', x: 44, y: 54 },
+      { id: 'MLB-R', label: 'MLB-R', x: 56, y: 54 },
+      { id: 'LB-R',  label: 'LB-R',  x: 70, y: 54 },
+      { id: 'CB-L',  label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',  label: 'CB-R',  x: 88, y: 46 },
+    ],
+  },
+
+  // ── 3-3 ──────────────────────────────────────────
+  {
+    id: 'default-def-33', name: '3-3', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',  label: 'DE-L',  x: 40, y: 62 },
+      { id: 'NT',    label: 'NT',    x: 50, y: 62 },
+      { id: 'DE-R',  label: 'DE-R',  x: 60, y: 62 },
+      { id: 'LB-L',  label: 'LB-L',  x: 36, y: 54 },
+      { id: 'MLB',   label: 'MLB',   x: 50, y: 54 },
+      { id: 'LB-R',  label: 'LB-R',  x: 64, y: 54 },
+      { id: 'CB-L',  label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',  label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',    label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',    label: 'SS',    x: 68, y: 46 },
+      { id: 'NB',    label: 'NB',    x: 28, y: 46 },
+    ],
+  },
+
+  // ── 3-2 ──────────────────────────────────────────
+  {
+    id: 'default-def-32', name: '3-2', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',   label: 'DE-L',  x: 40, y: 62 },
+      { id: 'NT',     label: 'NT',    x: 50, y: 62 },
+      { id: 'DE-R',   label: 'DE-R',  x: 60, y: 62 },
+      { id: 'LB-L',   label: 'LB-L',  x: 44, y: 54 },
+      { id: 'LB-R',   label: 'LB-R',  x: 56, y: 54 },
+      { id: 'CB-L',   label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',   label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',     label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',     label: 'SS',    x: 62, y: 46 },
+      { id: 'NB-L',   label: 'NB-L',  x: 28, y: 46 },
+      { id: 'NB-R',   label: 'NB-R',  x: 72, y: 46 },
+    ],
+  },
+
+  // ── 2-3 ──────────────────────────────────────────
+  {
+    id: 'default-def-23', name: '2-3', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DT-L',   label: 'DT-L',  x: 44, y: 62 },
+      { id: 'DT-R',   label: 'DT-R',  x: 56, y: 62 },
+      { id: 'LB-L',   label: 'LB-L',  x: 36, y: 54 },
+      { id: 'MLB',    label: 'MLB',   x: 50, y: 54 },
+      { id: 'LB-R',   label: 'LB-R',  x: 64, y: 54 },
+      { id: 'CB-L',   label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',   label: 'CB-R',  x: 88, y: 46 },
+      { id: 'FS',     label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',     label: 'SS',    x: 62, y: 46 },
+      { id: 'NB-L',   label: 'NB-L',  x: 28, y: 46 },
+      { id: 'NB-R',   label: 'NB-R',  x: 72, y: 46 },
+    ],
+  },
+
+  // ── Nickel (4-2) ─────────────────────────────────
+  {
+    id: 'default-def-nickel', name: 'Nickel (4-2)', unit: 'DEF', isDefault: true,
+    positions: [
+      { id: 'DE-L',  label: 'DE-L',  x: 36, y: 62 },
+      { id: 'DT-L',  label: 'DT-L',  x: 44, y: 62 },
+      { id: 'DT-R',  label: 'DT-R',  x: 56, y: 62 },
+      { id: 'DE-R',  label: 'DE-R',  x: 64, y: 62 },
+      { id: 'LB-L',  label: 'LB-L',  x: 44, y: 54 },
+      { id: 'LB-R',  label: 'LB-R',  x: 56, y: 54 },
+      { id: 'CB-L',  label: 'CB-L',  x: 12, y: 46 },
+      { id: 'CB-R',  label: 'CB-R',  x: 88, y: 46 },
+      { id: 'NB',    label: 'NB',    x: 28, y: 46 },
+      { id: 'FS',    label: 'FS',    x: 50, y: 44 },
+      { id: 'SS',    label: 'SS',    x: 68, y: 46 },
+    ],
+  },
+
   // ── KICKOFF ──────────────────────────────────────
   {
     id:        'default-st-kickoff',

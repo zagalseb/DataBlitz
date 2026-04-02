@@ -880,7 +880,11 @@ function loadPlay(index) {
     prevPlay.formation.toLowerCase() !== play.formation.toLowerCase();
 
   // Cargar posiciones del template de la nueva formación
-  const template = play.formation ? getFormationByName(play.formation) : null;
+  // En DEF/ST el frente defensivo (play.front) actúa como fuente de la formación
+  const formationSource = (play.unit === 'DEF' || play.unit?.startsWith('ST'))
+    ? (play.front || play.formation)
+    : play.formation;
+  const template = formationSource ? getFormationByName(formationSource) : null;
   if (template) {
     currentPositions = deepCopyPositions(template.positions);
   } else if (currentPositions.length === 0) {

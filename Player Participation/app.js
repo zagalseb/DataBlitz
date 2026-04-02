@@ -802,16 +802,6 @@ function getUnitLabel(unit) {
 ──────────────────────────────────────────── */
 
 /**
- * Resuelve el nombre de un item dado su ID dentro de un array {id, name}.
- * Si no encuentra el ID retorna el propio ID (fallback seguro).
- */
-function resolveLabel(id, items) {
-  if (!id) return '';
-  const found = (items || []).find(i => i.id === id);
-  return found ? found.name : id;
-}
-
-/**
  * Importa un partido de Gametime a PP.
  * Lee de TeamConfig.key('playsync_games'), mapea history[] → plays[].
  * @param {string} gametimeGameId - id del partido en Gametime
@@ -830,44 +820,57 @@ async function importGameFromGametime(gametimeGameId, customName) {
   const game  = games.find(g => g.id === gametimeGameId);
   if (!game) throw new Error('Partido no encontrado en Gametime');
 
+  const teamCode = TeamConfig.getActiveTeam();
+
+  // Resuelve un ID de playbook defensivo contra localStorage de Gametime.
+  // mode 'opp' → jugada DEF propia (playsync_playbook_own_def)
+  // otros modos → playbook del rival (playsync_playbook_opp_def)
+  function resolveDefLabel(id, listKey, mode) {
+    if (!id) return '';
+    const defKey = mode === 'opp' ? 'playsync_playbook_own_def' : 'playsync_playbook_opp_def';
+    try {
+      const raw = localStorage.getItem(TeamConfig.key(defKey));
+      if (raw) {
+        const pb = JSON.parse(raw);
+        const found = (pb[listKey] || []).find(i => i.id === id);
+        if (found) return found.name;
+      }
+    } catch {}
+    return id; // fallback: mostrar el id tal cual
+  }
+
   const history = game.state?.history ?? [];
   console.log(`[Import] Partido ${gametimeGameId}: ${history.length} jugadas en history`);
   if (history.length === 0) {
     throw new Error('El partido no tiene jugadas registradas en Gametime');
   }
 
-  const plays = history.map((h, i) => {
-    const defPb = h.mode === 'opp'
-      ? (typeof getOwnDefPlaybook === 'function' ? getOwnDefPlaybook() : { fronts: [], blitzes: [], coverages: [] })
-      : (typeof getOppDefPlaybook === 'function' ? getOppDefPlaybook() : { fronts: [], blitzes: [], coverages: [] });
-
-    return {
-      playNumber:   i + 1,
-      timestamp:    h.timestamp || new Date().toISOString(),
-      down:         h.down,
-      toFirst:      h.toFirst,
-      yardLine:     h.oppYardLine,
-      yardDisplay:  h.yardDisplay || '',
-      quarter:      h.quarter,
-      formation:    h.formationName || '',
-      play:         h.playName || '',
-      type:         h.type || '',
-      unit:         h.mode === 'opp'
-                      ? 'DEF'
-                      : h.mode === 'st'
-                        ? (h.stRole === 'return' ? 'ST-RET' : 'ST-KICK')
-                        : 'OFE',
-      yardsGained:  h.yardsGained ?? '',
-      result:       h.result || '',
-      noPlay:       h.noPlay || false,
-      penaltyType:  h.penalty?.foul || '',
-      front:        resolveLabel(h.selectedFront,    defPb.fronts),
-      blitz:        resolveLabel(h.selectedBlitz,    defPb.blitzes),
-      coverage:     resolveLabel(h.selectedCoverage, defPb.coverages),
-      lineup:       {},
-      grades:       {},
-    };
-  });
+  const plays = history.map((h, i) => ({
+    playNumber:   i + 1,
+    timestamp:    h.timestamp || new Date().toISOString(),
+    down:         h.down,
+    toFirst:      h.toFirst,
+    yardLine:     h.oppYardLine,
+    yardDisplay:  h.yardDisplay || '',
+    quarter:      h.quarter,
+    formation:    h.formationName || '',
+    play:         h.playName || '',
+    type:         h.type || '',
+    unit:         h.mode === 'opp'
+                    ? 'DEF'
+                    : h.mode === 'st'
+                      ? (h.stRole === 'return' ? 'ST-RET' : 'ST-KICK')
+                      : 'OFE',
+    yardsGained:  h.yardsGained ?? '',
+    result:       h.result || '',
+    noPlay:       h.noPlay || false,
+    penaltyType:  h.penalty?.foul || '',
+    front:        resolveDefLabel(h.selectedFront,    'fronts',    h.mode),
+    blitz:        resolveDefLabel(h.selectedBlitz,    'blitzes',   h.mode),
+    coverage:     resolveDefLabel(h.selectedCoverage, 'coverages', h.mode),
+    lineup:       {},
+    grades:       {},
+  }));
 
   const newId = generateId();
   saveGame({

@@ -419,6 +419,12 @@
 
   function autosave(tab) {
     localStorage.setItem(TeamConfig.key(KEYS[tab]), JSON.stringify(S.pb[tab]));
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+      const teamCode = TeamConfig.getActiveTeam();
+      if (teamCode) {
+        SupabaseDB.savePlaybook(teamCode, tab, S.pb[tab]).catch(console.warn);
+      }
+    }
     showToast('Saved ✓', '#00c896');
   }
 

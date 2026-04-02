@@ -802,6 +802,16 @@ function getUnitLabel(unit) {
 ──────────────────────────────────────────── */
 
 /**
+ * Resuelve el nombre de un item dado su ID dentro de un array {id, name}.
+ * Si no encuentra el ID retorna el propio ID (fallback seguro).
+ */
+function resolveLabel(id, items) {
+  if (!id) return '';
+  const found = (items || []).find(i => i.id === id);
+  return found ? found.name : id;
+}
+
+/**
  * Importa un partido de Gametime a PP.
  * Lee de TeamConfig.key('playsync_games'), mapea history[] → plays[].
  * @param {string} gametimeGameId - id del partido en Gametime
@@ -826,32 +836,38 @@ async function importGameFromGametime(gametimeGameId, customName) {
     throw new Error('El partido no tiene jugadas registradas en Gametime');
   }
 
-  const plays = history.map((h, i) => ({
-    playNumber:   i + 1,
-    timestamp:    h.timestamp || new Date().toISOString(),
-    down:         h.down,
-    toFirst:      h.toFirst,
-    yardLine:     h.oppYardLine,
-    yardDisplay:  h.yardDisplay || '',
-    quarter:      h.quarter,
-    formation:    h.formationName || '',
-    play:         h.playName || '',
-    type:         h.type || '',
-    unit:         h.mode === 'opp'
-                    ? 'DEF'
-                    : h.mode === 'st'
-                      ? (h.stRole === 'return' ? 'ST-RET' : 'ST-KICK')
-                      : 'OFE',
-    yardsGained:  h.yardsGained ?? '',
-    result:       h.result || '',
-    noPlay:       h.noPlay || false,
-    penaltyType:  h.penalty?.foul || '',
-    front:        h.selectedFront || '',
-    blitz:        h.selectedBlitz || '',
-    coverage:     h.selectedCoverage || '',
-    lineup:       {},
-    grades:       {},
-  }));
+  const plays = history.map((h, i) => {
+    const defPb = h.mode === 'opp'
+      ? (typeof getOwnDefPlaybook === 'function' ? getOwnDefPlaybook() : { fronts: [], blitzes: [], coverages: [] })
+      : (typeof getOppDefPlaybook === 'function' ? getOppDefPlaybook() : { fronts: [], blitzes: [], coverages: [] });
+
+    return {
+      playNumber:   i + 1,
+      timestamp:    h.timestamp || new Date().toISOString(),
+      down:         h.down,
+      toFirst:      h.toFirst,
+      yardLine:     h.oppYardLine,
+      yardDisplay:  h.yardDisplay || '',
+      quarter:      h.quarter,
+      formation:    h.formationName || '',
+      play:         h.playName || '',
+      type:         h.type || '',
+      unit:         h.mode === 'opp'
+                      ? 'DEF'
+                      : h.mode === 'st'
+                        ? (h.stRole === 'return' ? 'ST-RET' : 'ST-KICK')
+                        : 'OFE',
+      yardsGained:  h.yardsGained ?? '',
+      result:       h.result || '',
+      noPlay:       h.noPlay || false,
+      penaltyType:  h.penalty?.foul || '',
+      front:        resolveLabel(h.selectedFront,    defPb.fronts),
+      blitz:        resolveLabel(h.selectedBlitz,    defPb.blitzes),
+      coverage:     resolveLabel(h.selectedCoverage, defPb.coverages),
+      lineup:       {},
+      grades:       {},
+    };
+  });
 
   const newId = generateId();
   saveGame({

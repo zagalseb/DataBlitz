@@ -919,15 +919,30 @@
 
   // ── Init ──────────────────────────────────────────────────────────────
 
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     if (!TeamConfig.requireTeam()) return;
     TeamConfig.apply();
 
-    // Redirigir si el equipo no tiene acceso al producto GAMETIME
     const _prods = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
     if (!_prods.includes('gametime')) {
       window.location.href = 'index.html';
       return;
+    }
+
+    // Pull playbooks desde Supabase antes de cargar local
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc) {
+        const tabs = ['own-off', 'own-def', 'opp-off', 'opp-def', 'st', 'st-def'];
+        await Promise.all(tabs.map(async (tab) => {
+          try {
+            const remote = await SupabaseDB.loadPlaybook(tc, tab);
+            if (remote) {
+              localStorage.setItem(TeamConfig.key(KEYS[tab]), JSON.stringify(remote));
+            }
+          } catch (e) { console.warn(`[Playbook] pull ${tab} failed:`, e); }
+        }));
+      }
     }
 
     loadAll();

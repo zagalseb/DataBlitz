@@ -396,6 +396,7 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
+  <script src="../js/supabase.js"></script>
   <script src="../js/teamConfig.js"></script>
   <script src="app.js"></script>
   <script>
@@ -425,7 +426,7 @@
   /* ─────────────────────────────────────────────
      INIT
   ───────────────────────────────────────────── */
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     if (!TeamConfig.requireTeam()) return;
     const _products = TeamConfig.getTeamProducts(TeamConfig.getActiveTeam());
     if (!_products.includes('pp')) {
@@ -433,6 +434,25 @@
       return;
     }
     TeamConfig.apply();
+
+    // Pull formaciones desde Supabase antes de renderizar
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc) {
+        try {
+          const remote = await SupabaseDB.loadPPFormations(tc);
+          if (remote && Array.isArray(remote) && remote.length > 0) {
+            const local = ppGet(PP_KEYS.formations()) ?? [];
+            const localCustom  = local.filter(f => !f.isDefault).length;
+            const remoteCustom = remote.filter(f => !f.isDefault).length;
+            if (remoteCustom >= localCustom) {
+              ppSet(PP_KEYS.formations(), remote);
+            }
+          }
+        } catch (e) { console.warn('[Formations] pull failed:', e); }
+      }
+    }
+
     formations = getFormations();
     renderList();
     updateCounter();

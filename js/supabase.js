@@ -269,16 +269,40 @@ const SupabaseDB = (() => {
 
   async function savePlaybook(teamCode, unit, data) {
     if (!isOnline()) return;
-    await _req('playbooks?on_conflict=team_code,unit', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({
-        team_code:  teamCode,
-        unit,
-        data_json:  data,
-        updated_at: new Date().toISOString(),
-      }),
+    const body = JSON.stringify({
+      team_code:  teamCode,
+      unit,
+      data_json:  data,
+      updated_at: new Date().toISOString(),
     });
+    const res = await fetch(
+      `${SB_URL}/rest/v1/playbooks?apikey=${SB_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Prefer':        'resolution=merge-duplicates,return=minimal',
+        },
+        body,
+      }
+    );
+    if (res.status === 409 || res.status === 400) {
+      await fetch(
+        `${SB_URL}/rest/v1/playbooks?team_code=eq.${teamCode}&unit=eq.${unit}&apikey=${SB_KEY}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':  'application/json',
+            'apikey':        SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer':        'return=minimal',
+          },
+          body,
+        }
+      );
+    }
   }
 
   // ── Status UI ─────────────────────────────────────────────────

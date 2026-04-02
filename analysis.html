@@ -1032,9 +1032,10 @@
           map[key].yards += yds;
           if (ok) map[key].ok++;
         }
-        tally(fronts,    p.selectedFront    || '');
-        tally(blitzes,   p.selectedBlitz    || '');
-        tally(coverages, p.selectedCoverage || '');
+        const mode = p.mode || 'opp';
+        tally(fronts,    resolveDefId(p.selectedFront,    'fronts',    mode));
+        tally(blitzes,   resolveDefId(p.selectedBlitz,    'blitzes',   mode));
+        tally(coverages, resolveDefId(p.selectedCoverage, 'coverages', mode));
       });
       const toArr = map => Object.values(map)
         .map(v => ({ ...v,
@@ -1056,9 +1057,10 @@
         const cell = grid[r][c];
         cell.n++;
         function tally(map, key) { if (key) map[key] = (map[key] || 0) + 1; }
-        tally(cell.fronts,    p.selectedFront    || '');
-        tally(cell.blitzes,   p.selectedBlitz    || '');
-        tally(cell.coverages, p.selectedCoverage || '');
+        const mode = p.mode || 'opp';
+        tally(cell.fronts,    resolveDefId(p.selectedFront,    'fronts',    mode));
+        tally(cell.blitzes,   resolveDefId(p.selectedBlitz,    'blitzes',   mode));
+        tally(cell.coverages, resolveDefId(p.selectedCoverage, 'coverages', mode));
       });
       return grid;
     }
@@ -1180,6 +1182,23 @@
       if (!id || id === 'none') return '';
       const pb = getOwnDefPlaybookFromStorage();
       return pb[listKey]?.find(x => x.id === id)?.name || id;
+    }
+
+    function resolveDefId(id, listKey, mode) {
+      if (!id || id === 'none') return id;
+      const ownKey = TeamConfig.key('playsync_playbook_own_def');
+      const oppKey = TeamConfig.key('playsync_playbook_opp_def');
+      const keys   = (mode === 'opp') ? [ownKey, oppKey] : [oppKey, ownKey];
+      for (const k of keys) {
+        try {
+          const raw = localStorage.getItem(k);
+          if (!raw) continue;
+          const pb = JSON.parse(raw);
+          const found = (pb[listKey] || []).find(i => i.id === id);
+          if (found) return found.name;
+        } catch {}
+      }
+      return id;
     }
 
     function oppPlays(history) {

@@ -17,7 +17,7 @@
 
     .grade-layout {
       display: grid;
-      grid-template-columns: 60% 40%;
+      grid-template-columns: 60% 30% 10%;
       height: 100dvh;
       overflow: hidden;
     }
@@ -308,6 +308,194 @@
       flex: 1; font-size: 12px; padding: 10px 6px;
     }
 
+    /* ── PANEL PLAYS ── */
+    .panel-plays {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg-app);
+      border-left: 1px solid var(--border);
+    }
+
+    .panel-plays-header {
+      flex-shrink: 0;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .plays-filter-count {
+      font-size: 10px; font-weight: 800;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: .05em;
+    }
+
+    .plays-filter-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .plays-filter-btn {
+      width: 100%;
+      padding: 5px 4px;
+      font-size: 9px; font-weight: 800;
+      letter-spacing: .06em;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      transition: background .12s, color .12s, border-color .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .plays-filter-btn.active-all  {
+      background: rgba(255,255,255,.1);
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,.2);
+    }
+    .plays-filter-btn.active-ofe  {
+      background: var(--accent);
+      color: #fff; border-color: var(--accent);
+    }
+    .plays-filter-btn.active-def  {
+      background: var(--danger);
+      color: #fff; border-color: var(--danger);
+    }
+    .plays-filter-btn.active-st   {
+      background: var(--warn);
+      color: #fff; border-color: var(--warn);
+    }
+
+    .plays-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .plays-list::-webkit-scrollbar { width: 2px; }
+    .plays-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.1); border-radius: 99px;
+    }
+
+    .plays-quarter-sep {
+      padding: 6px 4px 3px;
+      font-size: 9px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      position: sticky; top: 0; z-index: 1;
+      text-align: center;
+    }
+
+    .play-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 6px 5px;
+      border-bottom: 1px solid var(--border-light, rgba(255,255,255,.04));
+      cursor: pointer;
+      transition: background .1s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+    .play-row:active { background: rgba(255,255,255,.05); }
+    .play-row.current {
+      background: rgba(30,136,229,.1);
+      border-left: 2px solid var(--accent);
+    }
+    .play-row.current.unit-def {
+      background: rgba(229,57,53,.1);
+      border-left-color: var(--danger);
+    }
+    .play-row.current.unit-st {
+      background: rgba(251,140,0,.1);
+      border-left-color: var(--warn);
+    }
+
+    .play-row-unit {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      position: absolute; left: 5px; top: 10px;
+      flex-shrink: 0;
+    }
+    .play-row-unit.ofe { background: var(--accent); }
+    .play-row-unit.def { background: var(--danger); }
+    .play-row-unit.st  { background: var(--warn); }
+
+    .play-row-main {
+      padding-left: 10px;
+      font-size: 10px; font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .play-row-sub {
+      padding-left: 10px;
+      font-size: 9px; color: var(--text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    @media (max-width: 767px) {
+      .grade-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .panel-left { height: auto; }
+      .panel-right { height: 50dvh; }
+      .panel-plays { display: none; }
+      .btn-open-plays { display: flex !important; }
+    }
+
+    .btn-open-plays { display: none; }
+
+    .plays-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 300;
+      display: flex; align-items: flex-end;
+      backdrop-filter: blur(2px);
+    }
+    .plays-modal-overlay.hidden { display: none; }
+    .plays-modal-box {
+      background: var(--bg-panel);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%; height: 70dvh;
+      display: flex; flex-direction: column;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+    .plays-modal-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .plays-modal-title { font-size: 15px; font-weight: 700; }
+    .plays-modal-filters {
+      display: flex; gap: 6px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .plays-modal-filters .plays-filter-btn {
+      flex: 1;
+      font-size: 11px; padding: 7px 4px;
+    }
+    .plays-modal-list {
+      flex: 1; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .plays-modal-list .play-row {
+      padding: 10px 14px 10px 20px;
+    }
+    .plays-modal-list .play-row-main { font-size: 13px; }
+    .plays-modal-list .play-row-sub  { font-size: 11px; }
+    .plays-modal-list .play-row-unit { top: 14px; left: 8px; }
+
     /* ── PLAYER MODAL ── */
     .player-modal-overlay {
       position: fixed; inset: 0;
@@ -431,14 +619,6 @@
     /* Toast position for this page (no bottom nav) */
     .toast { bottom: 16px; }
 
-    @media (max-width: 767px) {
-      .grade-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-      }
-      .panel-left { height: auto; }
-      .panel-right { height: 50dvh; }
-    }
   </style>
 </head>
 <body>
@@ -535,6 +715,66 @@
 
   </div><!-- /panel-right -->
 
+  <!-- ─── PLAYS PANEL ─── -->
+  <div class="panel-plays" id="panel-plays">
+    <div class="panel-plays-header">
+      <div class="plays-filter-count" id="plays-filter-count">— jugadas</div>
+      <div class="plays-filter-btns">
+        <button class="plays-filter-btn active-all"
+                data-filter="all"
+                onclick="setPlaysFilter('all')">TODOS</button>
+        <button class="plays-filter-btn"
+                data-filter="OFE"
+                onclick="setPlaysFilter('OFE')">OFE</button>
+        <button class="plays-filter-btn"
+                data-filter="DEF"
+                onclick="setPlaysFilter('DEF')">DEF</button>
+        <button class="plays-filter-btn"
+                data-filter="ST"
+                onclick="setPlaysFilter('ST')">ST</button>
+      </div>
+    </div>
+    <div class="plays-list" id="plays-list"></div>
+  </div>
+
+</div>
+
+<!-- Botón mobile para abrir lista jugadas -->
+<button class="btn-open-plays" id="btn-open-plays"
+        onclick="openPlaysModal()"
+        style="position:fixed;bottom:80px;right:16px;z-index:100;
+               width:44px;height:44px;border-radius:50%;
+               background:var(--bg-panel);border:1px solid var(--border);
+               font-size:16px;align-items:center;
+               justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4)">
+  ☰
+</button>
+
+<!-- Modal jugadas (mobile) -->
+<div class="plays-modal-overlay hidden" id="plays-modal">
+  <div class="plays-modal-box">
+    <div class="plays-modal-header">
+      <div class="plays-modal-title">Jugadas</div>
+      <button onclick="closePlaysModal()"
+              style="font-size:18px;color:var(--text-muted);
+                     background:none;border:none;cursor:pointer">✕</button>
+    </div>
+    <div class="plays-modal-filters" id="plays-modal-filters">
+      <button class="plays-filter-btn active-all"
+              data-filter="all"
+              onclick="setPlaysFilter('all')">TODOS</button>
+      <button class="plays-filter-btn"
+              data-filter="OFE"
+              onclick="setPlaysFilter('OFE')">OFE</button>
+      <button class="plays-filter-btn"
+              data-filter="DEF"
+              onclick="setPlaysFilter('DEF')">DEF</button>
+      <button class="plays-filter-btn"
+              data-filter="ST"
+              onclick="setPlaysFilter('ST')">ST</button>
+    </div>
+    <div class="plays-modal-list" id="plays-modal-list"></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════
@@ -830,6 +1070,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const startPlay = parseInt(params.get('play') || '0', 10);
     const idx = !isNaN(startPlay) && startPlay >= 0 && startPlay < plays.length ? startPlay : 0;
     loadPlay(idx);
+    setPlaysFilter('all');
   }
 
   // Swipe on field
@@ -928,6 +1169,7 @@ function loadPlay(index) {
   renderChipNavButtons();
   updateNavButtons();
   updateUnitToggle();
+  renderPlaysList();
 
   // Save positions back to game formation
   ppSet(`pp_formation_${currentGame.id}_${activeUnit}`, currentPositions);
@@ -990,8 +1232,18 @@ function deepMergeGrades(grades) {
    RENDER PLAY HEADER
 ═══════════════════════════════════════════════════ */
 function renderPlayHeader() {
-  document.getElementById('play-counter').textContent =
-    `Jugada ${currentPlayIndex + 1} / ${plays.length}`;
+  const filtered = _playsFilter === 'all'
+    ? plays
+    : plays.filter(p => (p.unit || 'OFE') === _playsFilter);
+  const filteredPos = filtered.indexOf(plays[currentPlayIndex]) + 1;
+
+  if (_playsFilter !== 'all' && filteredPos > 0) {
+    document.getElementById('play-counter').textContent =
+      `Jugada ${filteredPos} / ${filtered.length} (${_playsFilter})`;
+  } else {
+    document.getElementById('play-counter').textContent =
+      `Jugada ${currentPlayIndex + 1} / ${plays.length}`;
+  }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1567,16 +1819,38 @@ function saveCurrentState() {
 }
 
 function nextPlay() {
-  if (currentPlayIndex < plays.length - 1) {
-    saveCurrentState();
-    loadPlay(currentPlayIndex + 1);
+  if (_playsFilter === 'all') {
+    if (currentPlayIndex < plays.length - 1) {
+      saveCurrentState();
+      loadPlay(currentPlayIndex + 1);
+    }
+  } else {
+    const filtered = plays
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => (p.unit || 'OFE') === _playsFilter);
+    const pos = filtered.findIndex(({ i }) => i === currentPlayIndex);
+    if (pos < filtered.length - 1) {
+      saveCurrentState();
+      loadPlay(filtered[pos + 1].i);
+    }
   }
 }
 
 function prevPlay() {
-  if (currentPlayIndex > 0) {
-    saveCurrentState();
-    loadPlay(currentPlayIndex - 1);
+  if (_playsFilter === 'all') {
+    if (currentPlayIndex > 0) {
+      saveCurrentState();
+      loadPlay(currentPlayIndex - 1);
+    }
+  } else {
+    const filtered = plays
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => (p.unit || 'OFE') === _playsFilter);
+    const pos = filtered.findIndex(({ i }) => i === currentPlayIndex);
+    if (pos > 0) {
+      saveCurrentState();
+      loadPlay(filtered[pos - 1].i);
+    }
   }
 }
 
@@ -1586,10 +1860,21 @@ function updateNavButtons() {
   const fpPrev  = document.getElementById('fp-prev');
   const fpNext  = document.getElementById('fp-next');
 
-  btnPrev.disabled = currentPlayIndex <= 0;
-  btnNext.disabled = currentPlayIndex >= plays.length - 1;
-  fpPrev.disabled  = currentPlayIndex <= 0;
-  fpNext.disabled  = currentPlayIndex >= plays.length - 1;
+  if (_playsFilter === 'all') {
+    btnPrev.disabled = currentPlayIndex <= 0;
+    btnNext.disabled = currentPlayIndex >= plays.length - 1;
+    fpPrev.disabled  = currentPlayIndex <= 0;
+    fpNext.disabled  = currentPlayIndex >= plays.length - 1;
+  } else {
+    const filtered = plays
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => (p.unit || 'OFE') === _playsFilter);
+    const pos = filtered.findIndex(({ i }) => i === currentPlayIndex);
+    btnPrev.disabled = pos <= 0;
+    btnNext.disabled = pos < 0 || pos >= filtered.length - 1;
+    fpPrev.disabled  = pos <= 0;
+    fpNext.disabled  = pos < 0 || pos >= filtered.length - 1;
+  }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1948,6 +2233,134 @@ function selectFormationFromPicker(formationName) {
   loadPlay(currentPlayIndex);
   closeFormationPicker();
   showToast(`Formación: ${formationName}`);
+}
+
+/* ═══════════════════════════════════════════════════
+   PLAYS PANEL
+═══════════════════════════════════════════════════ */
+let _playsFilter = 'all';  // 'all' | 'OFE' | 'DEF' | 'ST'
+
+function setPlaysFilter(filter) {
+  _playsFilter = filter;
+
+  // Actualizar botones en panel desktop
+  document.querySelectorAll('#panel-plays .plays-filter-btn').forEach(btn => {
+    btn.className = 'plays-filter-btn';
+    if (btn.dataset.filter === filter) {
+      btn.classList.add(filter === 'all' ? 'active-all'
+        : filter === 'OFE' ? 'active-ofe'
+        : filter === 'DEF' ? 'active-def'
+        : 'active-st');
+    }
+  });
+
+  // Actualizar botones en modal mobile
+  document.querySelectorAll('#plays-modal-filters .plays-filter-btn').forEach(btn => {
+    btn.className = 'plays-filter-btn';
+    if (btn.dataset.filter === filter) {
+      btn.classList.add(filter === 'all' ? 'active-all'
+        : filter === 'OFE' ? 'active-ofe'
+        : filter === 'DEF' ? 'active-def'
+        : 'active-st');
+    }
+  });
+
+  renderPlayHeader();
+  renderPlaysList();
+}
+
+function renderPlaysList() {
+  const filtered = _playsFilter === 'all'
+    ? plays
+    : plays.filter(p => (p.unit || 'OFE') === _playsFilter);
+
+  // Actualizar contador
+  const countEl = document.getElementById('plays-filter-count');
+  if (countEl) countEl.textContent = `${filtered.length} jugadas`;
+
+  // Agrupar por cuarto
+  const quarters = {};
+  filtered.forEach(p => {
+    const q = p.quarter || '?';
+    if (!quarters[q]) quarters[q] = [];
+    quarters[q].push({ play: p, realIdx: plays.indexOf(p) });
+  });
+
+  function rowsHTML() {
+    let html = '';
+    const sortedQuarters = Object.keys(quarters).sort((a, b) => {
+      const na = parseInt(a); const nb = parseInt(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a).localeCompare(String(b));
+    });
+
+    for (const q of sortedQuarters) {
+      html += `<div class="plays-quarter-sep">Q${q}</div>`;
+      quarters[q].forEach(({ play: p, realIdx }) => {
+        const unit    = (p.unit || 'OFE').toLowerCase();
+        const unitKey = unit.startsWith('ofe') ? 'ofe'
+          : unit.startsWith('def') ? 'def' : 'st';
+        const isCurrent = realIdx === currentPlayIndex;
+
+        const down = p.down && p.toFirst
+          ? `${p.down}ª & ${p.toFirst}`
+          : p.down ? `${p.down}ª` : '—';
+        const yd   = p.yardDisplay || p.yardLine || '';
+        const noPlay = p.noPlay && p.noPlay !== '' && p.noPlay !== '0' ? ' · NP' : '';
+
+        html += `
+          <div class="play-row${isCurrent ? ' current unit-' + unitKey : ''}"
+               onclick="jumpToPlay(${realIdx})">
+            <div class="play-row-unit ${unitKey}"></div>
+            <div class="play-row-main">${down}${yd ? ' · ' + yd : ''}</div>
+            <div class="play-row-sub">${esc(p.formation || '')}${noPlay}</div>
+          </div>`;
+      });
+    }
+    return html;
+  }
+
+  const html = rowsHTML();
+
+  // Render en panel desktop
+  const listEl = document.getElementById('plays-list');
+  if (listEl) listEl.innerHTML = html;
+
+  // Render en modal mobile
+  const modalListEl = document.getElementById('plays-modal-list');
+  if (modalListEl) modalListEl.innerHTML = html;
+
+  scrollToCurrentPlay();
+}
+
+function jumpToPlay(realIdx) {
+  if (realIdx === currentPlayIndex) return;
+  saveCurrentState();
+  loadPlay(realIdx);
+  closePlaysModal();
+  renderPlaysList();
+}
+
+function scrollToCurrentPlay() {
+  const listEl = document.getElementById('plays-list');
+  if (!listEl) return;
+  const currentRow = listEl.querySelector('.play-row.current');
+  if (currentRow) currentRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function openPlaysModal() {
+  document.getElementById('plays-modal').classList.remove('hidden');
+  renderPlaysList();
+  setTimeout(() => {
+    const ml = document.getElementById('plays-modal-list');
+    if (!ml) return;
+    const cur = ml.querySelector('.play-row.current');
+    if (cur) cur.scrollIntoView({ block: 'center' });
+  }, 50);
+}
+
+function closePlaysModal() {
+  document.getElementById('plays-modal').classList.add('hidden');
 }
 </script>
 

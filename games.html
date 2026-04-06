@@ -457,21 +457,28 @@ function renderPage() {
 
   // Delete
   list.querySelectorAll('.game-card-del').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', async e => {
       e.stopPropagation();
       const id   = btn.dataset.id;
       const game = games.find(g => g.id === id);
       const lbl  = game ? `${game.teamHome} vs ${game.teamAway}` : 'este partido';
       if (!confirm(`¿Eliminar ${lbl}? No se puede deshacer.`)) return;
+
+      // Eliminar local (hard delete)
       const updated = games.filter(g => g.id !== id);
       saveGames(updated);
-      const _tc = TeamConfig.getActiveTeam();
-      if (_tc && typeof SupabaseDB !== 'undefined') {
-        SupabaseDB.deleteGame(id).catch(console.warn);
-      }
       if (getCurrentId() === id) {
         localStorage.removeItem(TeamConfig.key('playsync_current_game_id'));
       }
+
+      // Esperar DELETE en Supabase antes de renderizar
+      const _tc = TeamConfig.getActiveTeam();
+      if (_tc && typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+        try {
+          await SupabaseDB.deleteGame(id);
+        } catch (e) { console.warn('[delete] Supabase DELETE falló:', e); }
+      }
+
       showToast('Partido eliminado');
       renderPage();
     });

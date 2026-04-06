@@ -246,17 +246,30 @@ const SupabaseDB = (() => {
   }
 
   function _mergeGames(local, remote) {
+    // Set de IDs que existen en local — ausencia = eliminado en este dispositivo
+    const localIds = new Set(local.map(g => g.id));
+
     const map = new Map();
-    for (const g of remote) map.set(g.id, g);
+
+    // Cargar remotos — ignorar los que ya no existen en local (fueron eliminados aquí)
+    for (const g of remote) {
+      if (localIds.has(g.id)) {
+        map.set(g.id, g);
+      }
+      // Si NO está en local → fue eliminado → no restaurar
+    }
+
+    // Aplicar locales — local siempre gana en contenido
     for (const g of local) {
       const existing = map.get(g.id);
       if (!existing || (g.plays || 0) >= (existing.plays || 0)) {
         map.set(g.id, g);
       }
     }
-    return [...map.values()].sort((a, b) => {
-      return new Date(b.date || 0) - new Date(a.date || 0);
-    });
+
+    return [...map.values()].sort((a, b) =>
+      new Date(b.date || 0) - new Date(a.date || 0)
+    );
   }
 
   // ── Playbooks ─────────────────────────────────────────────────
@@ -394,6 +407,8 @@ const SupabaseDB = (() => {
       date:      game.date || '',
       opponent:  game.opponent || '',
       status:    game.status || 'active',
+      type:      game.type   || 'partido',   // 'partido' | 'practica' | 'skell'
+      week:      game.week   || '',
       updated_at: new Date().toISOString(),
     });
     const res = await fetch(
@@ -436,6 +451,8 @@ const SupabaseDB = (() => {
       date:     r.date,
       opponent: r.opponent,
       status:   r.status,
+      type:     r.type || 'partido',
+      week:     r.week || '',
     }));
   }
 

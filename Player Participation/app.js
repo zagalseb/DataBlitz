@@ -139,27 +139,25 @@ function getGame(id) {
   return getGames().find(g => g.id === id) ?? null;
 }
 
-function saveGame({ id, name, date, opponent, status }, _skipRemote = false) {
+function saveGame({ id, name, date, opponent, status, type, week }) {
+  const gameData = {
+    id:       id || generateId(),
+    name:     name     || '',
+    date:     date     || '',
+    opponent: opponent || '',
+    status:   status   || 'active',
+    type:     type     || 'partido',   // 'partido' | 'practica' | 'skell'
+    week:     week     || '',
+  };
   ppUpdate(PP_KEYS.games(), (games) => {
     const list = games ?? [];
-    const game = {
-      id:       id || generateId(),
-      name:     name || '',
-      date:     date || '',
-      opponent: opponent || '',
-      status:   status || 'active',
-    };
-    const idx = list.findIndex(g => g.id === game.id);
-    if (idx >= 0) {
-      list[idx] = game;
-    } else {
-      list.unshift(game);
-    }
+    const idx  = list.findIndex(g => g.id === gameData.id);
+    if (idx >= 0) { list[idx] = gameData; } else { list.push(gameData); }
     return list;
   });
-  if (!_skipRemote && _ppSB() && _ppTeam()) {
-    const g = getGame(id || '');
-    if (g) SupabaseDB.upsertPPGame(_ppTeam(), g).catch(console.warn);
+  // Sync a Supabase — fire-and-forget
+  if (_ppSB() && _ppTeam()) {
+    SupabaseDB.upsertPPGame(_ppTeam(), gameData).catch(console.warn);
   }
 }
 
@@ -768,7 +766,7 @@ function parsePlaySyncCSV(text) {
 function createGameFromCSV(csvText, meta) {
   const id    = generateId();
   const plays = parsePlaySyncCSV(csvText);
-  saveGame({ id, name: meta.name || 'Partido', date: meta.date || '', opponent: meta.opponent || '', status: 'active' });
+  saveGame({ id, name: meta.name || 'Partido', date: meta.date || '', opponent: meta.opponent || '', status: 'active', type: meta.type || 'partido' });
   savePlays(id, plays);
   return id;
 }
@@ -807,7 +805,7 @@ function getUnitLabel(unit) {
  * @param {string} gametimeGameId - id del partido en Gametime
  * @returns {string} - id del partido creado en PP
  */
-async function importGameFromGametime(gametimeGameId, customName) {
+async function importGameFromGametime(gametimeGameId, customName, gameType) {
   // Intentar sync de Gametime antes de importar
   if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
     try {
@@ -890,6 +888,7 @@ async function importGameFromGametime(gametimeGameId, customName) {
     })(),
     opponent: game.teamAway || '',
     status:   'active',
+    type:     gameType || 'partido',
   });
   savePlays(newId, plays);
   return newId;

@@ -170,12 +170,22 @@ const GameManager = (() => {
   }
 
   // ── Delete game ───────────────────────
-  function deleteGame(id) {
+  async function deleteGame(id) {
+    // 1. Eliminar de local primero
     let games = _loadGames();
     games = games.filter(g => g.id !== id);
     _saveGames(games);
     if (_getCurrentId() === id) {
       localStorage.removeItem(TeamConfig.key('playsync_current_game_id'));
+    }
+    // 2. DELETE en Supabase — esperar que termine antes de retornar
+    if (typeof SupabaseDB !== 'undefined' && SupabaseDB.isOnline()) {
+      const tc = TeamConfig.getActiveTeam();
+      if (tc) {
+        try {
+          await SupabaseDB.deleteGame(id);
+        } catch (e) { console.warn('[deleteGame] Supabase DELETE falló:', e); }
+      }
     }
   }
 

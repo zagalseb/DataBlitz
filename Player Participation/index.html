@@ -718,7 +718,7 @@
       <div class="modal-tabs">
         <button class="modal-tab-btn active" id="tab-csv-btn"    onclick="switchTab('csv')">Cargar CSV</button>
         <button class="modal-tab-btn"         id="tab-manual-btn" onclick="switchTab('manual')">Manual</button>
-        <button class="modal-tab-btn"         id="tab-gt-btn"     onclick="switchTab('gametime')">Desde Gametime</button>
+        <button class="modal-tab-btn"         id="tab-gt-btn"     onclick="switchTab('gametime')">Desde Playsync</button>
       </div>
 
       <!-- Tipo de sesión -->
@@ -782,7 +782,7 @@
       <!-- Gametime tab content -->
       <div id="tab-gametime" class="hidden">
         <div id="gt-empty" class="hidden" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">
-          No hay partidos de Gametime disponibles para importar.
+          No hay partidos de Playsync disponibles para importar.
         </div>
         <div id="gt-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
       </div>
@@ -1374,7 +1374,7 @@
       }
     } else if (activeTab === 'gametime') {
       if (!selectedGametimeId) {
-        showToast('Selecciona un partido de Gametime');
+        showToast('Selecciona un partido de Playsync');
         return;
       }
       try {

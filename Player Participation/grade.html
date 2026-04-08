@@ -619,6 +619,23 @@
     /* Toast position for this page (no bottom nav) */
     .toast { bottom: 16px; }
 
+    .notes-textarea {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 8px 10px;
+      resize: none;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .notes-textarea:focus { border-color: var(--accent); }
+    .notes-textarea::placeholder { color: var(--text-muted); opacity: .6; }
+
   </style>
 </head>
 <body>
@@ -985,7 +1002,7 @@ let plays            = [];
 let currentPlayIndex = 0;
 let currentPositions = [];   // [{ id, label, x, y }]
 let currentLineup    = {};   // { positionId: playerId } — persiste entre jugadas en memoria
-let currentGrades    = {};   // { playerId: { asignacion, ejecucion, decision, impacto, disciplina } }
+let currentGrades    = {};   // { playerId: { asignacion, ejecucion, decision, impacto, disciplina, notas? } }
 let selectedChipId   = null;
 let isMoveMode       = false;
 let activeUnit       = 'OFE';
@@ -1702,6 +1719,20 @@ function renderRightPanel() {
       </div>`;
   }).join('');
 
+  // Notes
+  const noteVal = (grades.notas) || '';
+  const notesHtml = `
+    <div style="padding: 10px 0 4px 0;">
+      <div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px">Notas:</div>
+      <textarea
+        id="note-ta-${playerId}"
+        class="notes-textarea"
+        rows="3"
+        placeholder="Observaciones de esta jugada..."
+        oninput="setNote('${playerId}', this.value)"
+      >${esc(noteVal)}</textarea>
+    </div>`;
+
   // Average
   const gradeVals = cats.map(c => grades[c.key]).filter(v => v !== undefined && v !== null);
   let avgHtml = '';
@@ -1740,6 +1771,7 @@ function renderRightPanel() {
       <div class="grade-section">
         ${gradeRowsHtml}
       </div>
+      ${notesHtml}
       ${avgHtml}
     </div>`;
   renderChipNavButtons();
@@ -1748,6 +1780,16 @@ function renderRightPanel() {
 /* ═══════════════════════════════════════════════════
    GRADING
 ═══════════════════════════════════════════════════ */
+function setNote(playerId, value) {
+  if (!currentGrades[playerId]) currentGrades[playerId] = {};
+  if (value.trim() === '') {
+    delete currentGrades[playerId].notas;
+  } else {
+    currentGrades[playerId].notas = value;
+  }
+  saveCurrentState();
+}
+
 function setGrade(playerId, category, value) {
   if (!currentGrades[playerId]) currentGrades[playerId] = {};
   // Toggle off if already selected

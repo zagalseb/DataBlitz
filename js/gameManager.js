@@ -90,7 +90,7 @@ const GameManager = (() => {
   }
 
   // ── Create new game ───────────────────
-  function createGame(teamHome = 'HOME', teamAway = 'AWAY', week = '1') {
+  function createGame(teamHome = 'HOME', teamAway = 'AWAY', week = '1', type = 'partido') {
     const id = 'game_' + Date.now();
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-MX', {
@@ -101,7 +101,7 @@ const GameManager = (() => {
       id, teamHome, teamAway,
       scoreHome: 0, scoreAway: 0,
       date: dateStr, week, plays: 0,
-      state: null,
+      state: null, type,
     };
 
     const games = _loadGames();

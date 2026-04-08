@@ -374,7 +374,7 @@
         <div class="create-modules">
           <label class="create-module-label">
             <input type="checkbox" id="chk-gametime" checked>
-            GAMETIME
+            PLAYSYNC
           </label>
           <label class="create-module-label">
             <input type="checkbox" id="chk-pp" checked>
@@ -545,7 +545,7 @@ function renderTeamsList(teams) {
         <div class="team-row-actions">
           <button class="mod-toggle ${prods.includes('gametime') ? 'on' : 'off'}"
                   onclick="toggleProduct('${esc(t.code)}','gametime')"
-                  title="Toggle GAMETIME">
+                  title="Toggle PLAYSYNC">
             GAME
           </button>
           <button class="mod-toggle ${prods.includes('pp') ? 'on' : 'off'}"
@@ -612,7 +612,7 @@ function toggleProduct(code, product) {
     ? current.filter(p => p !== product)
     : [...current, product];
   TeamConfig.updateTeamProducts(code, updated);
-  const label = product === 'gametime' ? 'GAMETIME' : 'PLAYER PARTICIPATION';
+  const label = product === 'gametime' ? 'PLAYSYNC' : 'PLAYER PARTICIPATION';
   showToast(`${code}: ${label} ${updated.includes(product) ? 'activado' : 'desactivado'}`);
   renderAdmin();
 }

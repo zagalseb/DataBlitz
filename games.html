@@ -239,6 +239,30 @@
     }
     .modal-confirm-btn:active { opacity: .8; }
 
+    /* ── Type selector (Gametime games.html) ── */
+    .type-selector-gt {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .type-btn-gt {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm, 6px);
+      background: transparent;
+      color: var(--text-sec);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .type-btn-gt.active {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--accent);
+    }
+
     /* ── Toast ── */
     .toast {
       position: fixed; bottom: 24px; left: 50%;
@@ -297,6 +321,14 @@
       <label class="modal-label">Semana</label>
       <select class="modal-select" id="input-week"></select>
     </div>
+    <div class="modal-field">
+      <label class="modal-label">Tipo</label>
+      <div class="type-selector-gt" id="type-selector-gt">
+        <button class="type-btn-gt active" data-type="partido"  onclick="selectGameType('partido', this)">Partido</button>
+        <button class="type-btn-gt"        data-type="practica" onclick="selectGameType('practica', this)">Práctica</button>
+        <button class="type-btn-gt"        data-type="skell"    onclick="selectGameType('skell', this)">Skell</button>
+      </div>
+    </div>
     <button class="modal-confirm-btn" id="btn-confirm-new">
       Crear partido →
     </button>
@@ -310,6 +342,14 @@
 <script src="js/teamConfig.js"></script>
 <script>
 'use strict';
+
+let _gameType = 'partido'; // 'partido' | 'practica' | 'skell'
+
+function selectGameType(type, btn) {
+  _gameType = type;
+  document.querySelectorAll('.type-btn-gt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
 if (!TeamConfig.requireTeam()) { /* redirects to login */ }
 
@@ -436,6 +476,7 @@ function renderPage() {
             <span>·</span>
             <span>${g.plays || 0} jugadas</span>
             ${isActive ? '<span class="game-card-badge">ACTIVO</span>' : ''}
+            ${g.type && g.type !== 'partido' ? `<span class="game-card-badge" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border)">${g.type === 'practica' ? 'PRÁCTICA' : 'SKELL'}</span>` : ''}
           </div>
         </div>
         <div class="game-card-arrow">→</div>
@@ -496,6 +537,9 @@ function closeModal() {
   document.getElementById('input-home').value = '';
   document.getElementById('input-away').value = '';
   document.getElementById('input-week').selectedIndex = 0;
+  _gameType = 'partido';
+  document.querySelectorAll('.type-btn-gt').forEach(b => b.classList.remove('active'));
+  document.querySelector('.type-btn-gt[data-type="partido"]')?.classList.add('active');
 }
 
 function confirmNewGame() {
@@ -513,6 +557,7 @@ function confirmNewGame() {
     id, teamHome: home, teamAway: away,
     scoreHome: 0, scoreAway: 0,
     date: dateStr, week, plays: 0, state: null,
+    type: _gameType,
   });
   saveGames(games);
   localStorage.setItem(TeamConfig.key('playsync_current_game_id'), id);
